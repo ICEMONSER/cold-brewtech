@@ -5,8 +5,6 @@ import { underwriting } from "../engine/analytics";
 import { forecast, type Forecast } from "../engine/forecast";
 import { addDays, fmtBaht, fmtM, thaiDate } from "../engine/format";
 import { useApp, type FundCtx } from "../store";
-import { applyActions } from "../engine/scenario";
-import type { Ledger } from "../engine/types";
 import { Modal } from "./ui";
 
 /** Funding context for the base plan: shown when underwriting makes a loss. */
@@ -52,16 +50,7 @@ type Opt = { key: string; source: string; product: string; rate: number; fee: nu
 export function FundingWatcher() {
   const app = useApp();
   const base = useBaseFund();
-  const sreq = app.scenarioReq;
-  const scCtx = useMemo(() => {
-    if (!sreq) return null;
-    const thr = sreq.reserveM * 1e6, H = sreq.horizon;
-    const base0 = forecast(app.ds, { horizon: H, today: app.today, threshold: thr });
-    const sds = applyActions(app.ds, sreq.actions, app.today, base0.trough.day);
-    const run = (extra: Ledger[]) => forecast({ ...sds, ledger: [...sds.ledger, ...extra] }, { horizon: H, today: app.today, threshold: thr, claimShock: sreq.shock, receiptDelay: sreq.delay });
-    return scenarioFundCtx(run([]), thr, sreq.label, run);
-  }, [sreq, app.ds, app.today]);
-  const ctx: FundCtx | null = scCtx ?? (base.show ? base : null);
+  const ctx: FundCtx | null = app.scenarioFund ?? (base.show ? base : null);
   useEffect(() => { if (ctx && !dismissed(ctx.key)) app.setFunding(true); }, [ctx?.key]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (!ctx && app.funding) app.setFunding(false); }, [ctx]); // eslint-disable-line react-hooks/exhaustive-deps
   const close = () => { app.setFunding(false); if (ctx) dismiss(ctx.key); };

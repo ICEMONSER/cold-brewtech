@@ -1,49 +1,51 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import CashChart, { Legend } from "../components/CashChart";
-import { AlertBanner, Kpi, PageHeader, Pill } from "../components/Shell";
+import { useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import ConciergePanel, { WhatIf } from "../components/Concierge";
+import { Legend } from "../components/CashChart";
+import LiveChart from "../components/LiveChart";
+import { Kpi, LiveAlert, PageHeader, Pill } from "../components/Shell";
+import { Menu, Modal } from "../components/ui";
 import * as I from "../components/icons";
-import { BASE, BAND, LEGEND_MAIN, SHOCK_STOPS } from "../data";
+import { fmtBaht, fmtM, lineLabel, thaiDate, STATUS_TH } from "../engine/format";
+import { LEGEND_MAIN } from "../data";
+import { useApp } from "../store";
 
-const UPCOMING = [
-  ["5 พ.ย. 2567", "จ่ายเคลมรถยนต์ (Motor)", "฿12,000,000"],
-  ["12 พ.ย. 2567", "จ่ายเคลมสุขภาพ (Health)", "฿25,000,000"],
-  ["20 พ.ย. 2567", "จ่ายเคลมทรัพย์สิน (Property)", "฿18,000,000"],
-];
+const TYPE_TH: Record<string, string> = { motor: "จ่ายเคลมรถยนต์ (Motor)", health: "จ่ายเคลมสุขภาพ (Health)", property: "จ่ายเคลมทรัพย์สิน (Property)" };
 
 export default function Overview() {
+  const { fc, threshold, ds } = useApp();
+  const nav = useNavigate();
+  const [detail, setDetail] = useState<null | { date: string; line: string; items: { claim_id: string; amount: number }[] }>(null);
+  const upcoming = useMemo(() => {
+    // group scheduled payments by date + line, show the three largest upcoming payment runs
+    const g = new Map<string, { date: string; line: string; amount: number; items: { claim_id: string; amount: number }[] }>();
+    for (const c of fc.contributors) if (c.kind === "scheduled") {
+      const k = c.date + c.line;
+      if (!g.has(k)) g.set(k, { date: c.date, line: c.line, amount: 0, items: [] });
+      const x = g.get(k)!; x.amount += c.amount; x.items.push({ claim_id: c.claim_id, amount: c.amount });
+    }
+    return [...g.values()].sort((a, b) => b.amount - a.amount).slice(0, 3).sort((a, b) => (a.date < b.date ? -1 : 1));
+  }, [fc]);
+  const claimById = useMemo(() => new Map(ds.claims.map((c) => [c.claim_id, c])), [ds]);
   return (
     <>
       <PageHeader title="ภาพรวมกระแสเงินสด" />
       <div className="ov">
         <div className="ov-left">
-          <AlertBanner>วันที่ 20 เงินสดอาจต่ำกว่าเกณฑ์ <em>฿8M</em></AlertBanner>
+          <LiveAlert />
           <div className="kpi4">
-            <Kpi icon={<I.Wallet size={24} />} label="เงินสดที่ใช้ได้" value="฿120M" />
-            <Kpi icon={<I.Doc size={24} />} label="คาดการณ์จ่ายเคลม" value="฿85M" />
-            <Kpi icon={<I.BarsSolid size={21} />} label="เงินสดปลายงวด" value="฿50M" />
-            <Kpi icon={<I.Shield size={24} />} label="เงินสำรองขั้นต่ำ" value="฿40M" />
+            <Kpi icon={<I.Wallet size={24} />} label="เงินสดที่ใช้ได้" value={fmtM(fc.opening)} onClick={() => nav("/forecast")} />
+            <Kpi icon={<I.Doc size={24} />} label="คาดการณ์จ่ายเคลม" value={fmtM(fc.totals.claims)} onClick={() => nav("/claims")} />
+            <Kpi icon={<I.BarsSolid size={21} />} label="เงินสดปลายงวด" value={fmtM(fc.closing)} onClick={() => nav("/forecast")} />
+            <Kpi icon={<I.Shield size={24} />} label="เงินสำรองขั้นต่ำ" value={fmtM(threshold)} onClick={() => nav("/settings?tab=alerts")} />
           </div>
 
           <section className="card chart-card" style={{ height: 410 }}>
-            <h3 className="card-title">คาดการณ์เงินสด 30 วัน</h3>
+            <h3 className="card-title">คาดการณ์เงินสด {fc.horizon} วัน</h3>
             <span className="unit" style={{ position: "absolute", left: 21, top: 57 }}>ล้านบาท</span>
-            <CashChart
-              w={870} h={360} x0={72} x1={835} yZero={318} yTop={90} yTickX={45}
-              xTicks={[{ day: 1, label: "วันที่ 1" }, { day: 10, label: "วันที่ 10" }, { day: 20, label: "วันที่ 20" }, { day: 30, label: "วันที่ 30" }]}
-              xTickY={346}
-              threshold={{ value: 40, label: { x: 74, y: 256, text: "เกณฑ์เงินสำรองขั้นต่ำ ฿40M", size: 14, color: "#2b2f38" } }}
-              series={[{ pts: BASE, color: "#8b1a24", big: [1, 19.7, 30], bigR: 6, bigStroke: "#fff", dot: 3.4, band: BAND }]}
-              labels={[
-                { x: 76, y: 125, text: "฿120M", weight: 700, size: 14 },
-                { x: 854, y: 227, text: "฿50M", weight: 700, size: 14, anchor: "end" },
-                { x: 568, y: 299, text: "฿32M", weight: 700, size: 14, anchor: "middle" },
-              ]}
-              callouts={[{ x: 550, y: 195, w: 119, h: 42, tip: 567, tipY: 258, fill: "#8b1a24", lines: ["ต่ำกว่าเกณฑ์ ฿8M", "วันที่ 20"], size: 12 }]}
-            />
-            <div className="legend-wrap" style={{ top: 375 }}>
-              <Legend items={LEGEND_MAIN} gap={22} />
-            </div>
+            <LiveChart w={870} h={360} x0={72} x1={835} yZero={318} yTop={90} yTickX={45} xTickY={346} threshold={threshold}
+              series={[{ pts: fc.series, color: "#8b1a24", band: "#f9e4e6" }]} compact />
+            <div className="legend-wrap" style={{ top: 375 }}><Legend items={LEGEND_MAIN} gap={22} /></div>
           </section>
 
           <section className="card ov-table">
@@ -52,71 +54,39 @@ export default function Overview() {
               <colgroup><col style={{ width: 144 }} /><col style={{ width: 317 }} /><col style={{ width: 163 }} /><col /><col style={{ width: 60 }} /></colgroup>
               <thead><tr><th>วันที่</th><th>ประเภท</th><th>จำนวนเงิน</th><th>สถานะ</th><th /></tr></thead>
               <tbody>
-                {UPCOMING.map((r) => (
-                  <tr key={r[0]}>
-                    <td className="th">{r[0]}</td><td className="th">{r[1]}</td><td>{r[2]}</td>
+                {upcoming.map((r) => (
+                  <tr key={r.date + r.line} className="row-click" onClick={() => setDetail(r)}>
+                    <td className="th">{thaiDate(r.date)}</td><td className="th">{TYPE_TH[r.line] ?? `จ่ายเคลม${lineLabel(r.line)}`}{r.items.length > 1 && <span className="muted"> · {r.items.length} รายการ</span>}</td><td>{fmtBaht(r.amount)}</td>
                     <td><Pill tone="wait">รอดำเนินการ</Pill></td>
-                    <td><button className="dots" aria-label="เพิ่มเติม"><I.Dots size={18} /></button></td>
+                    <td><Menu items={[
+                      { label: "ดูรายการเคลม", onClick: () => setDetail(r) },
+                      { label: "ดูผลต่อเงินสด", onClick: () => nav("/forecast") },
+                      { label: "จำลองเลื่อนจ่าย/เคลมเพิ่ม", onClick: () => nav("/scenario") },
+                    ]} /></td>
                   </tr>
                 ))}
+                {!upcoming.length && <tr><td colSpan={5} className="muted" style={{ textAlign: "center" }}>ไม่มีรายการกำหนดจ่ายในช่วงนี้</td></tr>}
               </tbody>
             </table>
-            <div className="foot"><Link to="/claims" className="link">ดูรายการทั้งหมด <I.ArrowRight size={15} /></Link></div>
+            <div className="foot"><Link to="/claims?due=1" className="link">ดูรายการทั้งหมด <I.ArrowRight size={15} /></Link></div>
           </section>
         </div>
 
-        <Concierge />
+        <aside className="card concierge">
+          <ConciergePanel />
+          <WhatIf />
+        </aside>
       </div>
+      {detail && (
+        <Modal title={`จ่ายเคลม${lineLabel(detail.line)} · ${thaiDate(detail.date)}`} onClose={() => setDetail(null)}
+          footer={<><button className="btn btn-ghost mbtn" onClick={() => setDetail(null)}>ปิด</button><button className="btn mbtn" onClick={() => nav(`/claims?q=${detail.items[0].claim_id}`)}>เปิดในหน้าวิเคราะห์เคลม</button></>}>
+          <table className="tbl mtbl">
+            <thead><tr><th>รหัสเคลม</th><th>สถานะ</th><th style={{ textAlign: "right" }}>จำนวนเงิน</th></tr></thead>
+            <tbody>{[...detail.items].sort((a, b) => b.amount - a.amount).map((x) => <tr key={x.claim_id}><td>{x.claim_id}</td><td className="th">{STATUS_TH[claimById.get(x.claim_id)?.status ?? ""] ?? "-"}</td><td style={{ textAlign: "right" }}>{fmtBaht(x.amount)}</td></tr>)}</tbody>
+          </table>
+          <p className="muted" style={{ marginTop: 10 }}>รวม {fmtBaht(detail.items.reduce((a, x) => a + x.amount, 0))} · ข้อมูลจาก Payment System (scheduled)</p>
+        </Modal>
+      )}
     </>
-  );
-}
-
-function Concierge() {
-  const [shock, setShock] = useState(2);
-  const pos = (i: number) => SHOCK_STOPS[i].at;
-  return (
-    <aside className="card concierge">
-      <div className="cg-head"><I.Sparkle size={32} /><h2>AI Concierge</h2><span className="beta">Beta</span></div>
-      <div className="cg-q"><span className="who"><I.User size={24} /></span><div className="bubble-q">เดือนนี้ต้องเตรียมเงินเพิ่มเท่าไร?</div></div>
-      <div className="cg-a">
-        <span className="cg-avatar"><I.Leaf size={20} /></span>
-        <div className="bubble-a">
-          <p>คาดว่าเงินสดจะต่ำกว่าเกณฑ์ 8 ล้านบาท ในวันที่ 20 โปรดตรวจสอบกำหนดรับเงินประกันภัยต่อ</p>
-          <hr />
-          <div className="src-h">แหล่งข้อมูล</div>
-          <div className="src"><I.Doc size={18} /><Link to="/claims">ข้อมูลเคลม</Link><span className="sep">•</span><Link to="/forecast">แผนรับจ่าย</Link></div>
-          <div className="fb"><button aria-label="มีประโยชน์"><I.ThumbUp /></button><button aria-label="ไม่มีประโยชน์"><I.ThumbDown /></button></div>
-        </div>
-      </div>
-      <div className="sugg">
-        {["มีวิธีเพิ่มสภาพคล่องอะไรบ้าง?", "ถ้าเลื่อนจ่ายเคลมบางรายการได้หรือไม่?", "ความเสี่ยงหลักที่ทำให้เงินสดต่ำกว่าเกณฑ์คืออะไร?"].map((q) => (
-          <button key={q}>{q}<I.ChevronRight size={18} /></button>
-        ))}
-      </div>
-      <form className="ask" onSubmit={(e) => e.preventDefault()}>
-        <input placeholder="ถามเกี่ยวกับกระแสเงินสด..." aria-label="ถามเกี่ยวกับกระแสเงินสด" />
-        <button aria-label="ส่ง"><I.Send size={20} /></button>
-      </form>
-      <div className="whatif">
-        <div className="whatif-head">
-          <span className="ico"><I.Bars4 size={22} /></span>
-          <b>หากยอดเคลมเพิ่มขึ้น</b>
-          <span className="i-mark"><I.Info size={18} /></span>
-          <span className="pct">{SHOCK_STOPS[shock].label}</span>
-        </div>
-        <div style={{ padding: "16px 6px 0" }}>
-          <div className="slider" style={{ width: 338 }}>
-            <div className="track" />
-            <div className="fill" style={{ width: pos(shock) }} />
-            <div className="knob" style={{ left: pos(shock) }} />
-            <input type="range" min={0} max={SHOCK_STOPS.length - 1} value={shock} onChange={(e) => setShock(+e.target.value)} aria-label="ยอดเคลมเพิ่มขึ้น" />
-          </div>
-          <div className="ticks" style={{ marginTop: 4, width: 338 }}>
-            {SHOCK_STOPS.map((s) => <span key={s.label} style={{ left: s.at }}>{s.label}</span>)}
-          </div>
-        </div>
-        <Link to="/scenario" className="btn" style={{ width: "100%", height: 42, marginTop: 23 }}>จำลองผลกระทบ</Link>
-      </div>
-    </aside>
   );
 }

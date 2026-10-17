@@ -1,5 +1,9 @@
 import { ReactNode } from "react";
-import { NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { fmtM, hhmm } from "../engine/format";
+import { SOURCES } from "../engine/types";
+import { useApp } from "../store";
+import { Dropdown, Popover } from "./ui";
 import * as I from "./icons";
 
 const NAV = [
@@ -39,35 +43,37 @@ export function Sidebar() {
   );
 }
 
-export function Select({ icon, children, w, className = "" }: { icon?: ReactNode; children: ReactNode; w?: number; className?: string }) {
-  return (
-    <button type="button" className={"select " + className} style={w ? { width: w } : undefined}>
-      {icon && <span className="sel-ico">{icon}</span>}
-      <span className="sel-txt">{children}</span>
-      <span className="sel-chev"><I.Chevron /></span>
-    </button>
-  );
-}
-
 export function SampleChip({ small }: { small?: boolean }) {
+  const { meta } = useApp();
+  const ups = Object.values(meta).filter((m) => m.origin === "upload").length;
+  const label = ups === 0 ? "ข้อมูลสมมติ" : ups === 5 ? "ข้อมูลบริษัท" : "ข้อมูลผสม";
   return (
-    <span className={"chip" + (small ? " sm" : "")}>
-      ข้อมูลสมมติ <I.Info size={small ? 13 : 17} />
-    </span>
+    <Popover w={330} trigger={<span className={"chip" + (small ? " sm" : "") + (ups === 5 ? " real" : "")}>{label} <I.Info size={small ? 13 : 17} /></span>}>
+      <div className="pop-b">
+        <b>แหล่งข้อมูลที่ใช้คำนวณ</b>
+        {SOURCES.map((s) => (
+          <div key={s.key} className="pop-row"><span>{s.system}</span><span className={meta[s.key].origin === "upload" ? "ok" : "muted"}>{meta[s.key].origin === "upload" ? `อัปโหลด (${meta[s.key].rows.toLocaleString()} แถว)` : "ข้อมูลตัวอย่าง"}</span></div>
+        ))}
+        <p>ตัวเลขทุกตัวคำนวณจากข้อมูลเหล่านี้ในเบราว์เซอร์ของคุณ ข้อมูลไม่ถูกส่งออกไปภายนอก</p>
+        <Link to="/settings?tab=sources" className="link">นำเข้าข้อมูลบริษัท <I.ArrowRight size={14} /></Link>
+      </div>
+    </Popover>
   );
 }
 
 export function PageHeader({ title, selects, gap = 105 }: { title: string; selects?: [number, number]; gap?: number }) {
   const [w1, w2] = selects ?? [208, 220];
+  const { settings, horizon, setHorizon, loadedAt, refresh, toast } = useApp();
+  const nav = useNavigate();
   return (
     <header className="page-head">
       <h1>{title}</h1>
       <SampleChip />
       <div className="head-selects" style={{ marginRight: gap }}>
-        <Select icon={<I.Building size={20} />} w={w1}>บริษัทประกัน A</Select>
-        <Select icon={<I.Calendar size={21} />} w={w2}>30 วันข้างหน้า</Select>
+        <Dropdown label="บริษัท" icon={<I.Building size={20} />} w={w1} value="a" options={[{ value: "a", label: settings.company }]} onChange={() => {}} footer={{ label: "แก้ไขข้อมูลบริษัท…", onClick: () => nav("/settings?tab=company") }} />
+        <Dropdown label="ช่วงเวลา" icon={<I.Calendar size={21} />} w={w2} value={horizon} onChange={(v) => setHorizon(v)} options={[30, 60, 90].map((d) => ({ value: d, label: `${d} วันข้างหน้า` }))} />
       </div>
-      <div className="updated"><span className="live" />อัปเดตล่าสุด 09:00</div>
+      <button type="button" className="updated" title="คำนวณใหม่จากข้อมูลล่าสุด" onClick={() => { refresh(); toast("คำนวณใหม่จากข้อมูลล่าสุดแล้ว"); }}><span className="live" />อัปเดตล่าสุด {hhmm(loadedAt)}</button>
     </header>
   );
 }
@@ -86,12 +92,31 @@ export function AlertBanner({ children, action = true, className = "" }: { child
   );
 }
 
-export function Kpi({ icon, tone = "rose", label, value, unit, sub, info, className = "" }: { icon: ReactNode; tone?: string; label: string; value: string; unit?: string; sub?: string; info?: boolean; className?: string }) {
+/** Banner driven by the live forecast and the alert rules in Settings. */
+export function LiveAlert({ className = "" }: { className?: string }) {
+  const { fc, settings, meta } = useApp();
+  const stale = settings.rules.stale && Object.values(meta).some((m) => m.origin === "upload" && Date.now() - m.updatedAt > 24 * 3600e3);
+  if (!settings.channels.inApp) return null;
+  if (settings.rules.below && fc.breach && !fc.breach.earlyWarning)
+    return <AlertBanner className={className}>วันที่ {fc.breach.day} เงินสดอาจต่ำกว่าเกณฑ์ <em>{fmtM(fc.breach.shortfall)}</em></AlertBanner>;
+  if (settings.rules.below && fc.breach?.earlyWarning)
+    return <AlertBanner className={className}>เฝ้าระวัง: วันที่ {fc.breach.day} เงินสดอาจแตะเกณฑ์ (ช่วงความไม่แน่นอน)</AlertBanner>;
+  if (stale) return <AlertBanner className={className}>ข้อมูลบางแหล่งไม่ได้อัปเดตเกิน 24 ชั่วโมง</AlertBanner>;
   return (
-    <div className={"card kpi " + className}>
+    <div className={"alert ok " + className} role="status">
+      <span className="bang okb"><I.Check size={16} /></span>
+      <strong>เงินสดสูงกว่าเกณฑ์ตลอด {fc.horizon} วัน (ต่ำสุด {fmtM(fc.trough.cash)} วันที่ {fc.trough.day})</strong>
+      <NavLink to="/forecast" className="btn btn-sm">ดูรายละเอียด <I.ArrowRight size={16} /></NavLink>
+    </div>
+  );
+}
+
+export function Kpi({ icon, tone = "rose", label, value, unit, sub, info, className = "", onClick }: { icon: ReactNode; tone?: string; label: string; value: string; unit?: string; sub?: string; info?: string; className?: string; onClick?: () => void }) {
+  return (
+    <div className={"card kpi " + className + (onClick ? " click" : "")} onClick={onClick} role={onClick ? "button" : undefined} tabIndex={onClick ? 0 : undefined} onKeyDown={(e) => onClick && e.key === "Enter" && onClick()}>
       <span className={"kpi-ico " + tone}>{icon}</span>
       <div className="kpi-body">
-        <div className="kpi-label">{label}{info && <span className="i-mark"><I.Info size={17} /></span>}</div>
+        <div className="kpi-label">{label}{info && <span onClick={(e) => e.stopPropagation()}><Popover w={280} trigger={<span className="i-mark"><I.Info size={17} /></span>}><div className="pop-b"><p style={{ margin: 0 }}>{info}</p></div></Popover></span>}</div>
         <div className="kpi-value">{value}{unit && <small>{unit}</small>}</div>
         {sub && <div className="kpi-sub">{sub}</div>}
       </div>
@@ -101,4 +126,8 @@ export function Kpi({ icon, tone = "rose", label, value, unit, sub, info, classN
 
 export function Pill({ tone, children }: { tone: string; children: ReactNode }) {
   return <span className={"pill " + tone}>{children}</span>;
+}
+
+export function InfoTip({ text, size = 17 }: { text: string; size?: number }) {
+  return <Popover w={280} trigger={<span className="i-mark"><I.Info size={size} /></span>}><div className="pop-b"><p style={{ margin: 0 }}>{text}</p></div></Popover>;
 }

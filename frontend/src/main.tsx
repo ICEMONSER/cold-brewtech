@@ -13,7 +13,10 @@ import "@fontsource/inter/700.css";
 import "@fontsource/inter/800.css";
 import "@fontsource/crimson-pro/500.css";
 import "./styles.css";
+import { useEffect } from "react";
 import { Sidebar } from "./components/Shell";
+import { Toasts } from "./components/ui";
+import { AppProvider, useApp } from "./store";
 import Overview from "./pages/Overview";
 import Forecast from "./pages/Forecast";
 import Claims from "./pages/Claims";
@@ -21,8 +24,33 @@ import Scenario from "./pages/Scenario";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 
+/** Scheduled report: when the app is opened after the scheduled time, prepare the report and notify. */
+function ScheduleWatcher() {
+  const app = useApp();
+  useEffect(() => {
+    const s = app.settings.schedule;
+    if (!s.enabled) return;
+    const now = new Date();
+    const [hh, mm] = s.time.split(":").map(Number);
+    const due = new Date(now); due.setHours(hh, mm, 0, 0);
+    due.setDate(due.getDate() - ((due.getDay() - s.weekday + 7) % 7));
+    if (due > now) due.setDate(due.getDate() - 7);
+    let last = 0; try { last = Number(localStorage.getItem("cbt.lastScheduled") ?? 0); } catch { /* ignore */ }
+    if (last >= due.getTime()) return;
+    try { localStorage.setItem("cbt.lastScheduled", String(Date.now())); } catch { /* ignore */ }
+    const titles: Record<string, string> = { forecast: `พยากรณ์เงินสด ${app.horizon} วัน`, claims: "สรุปสินไหม", scenario: "วิเคราะห์สถานการณ์เคลม +10%", underwriting: "ผลการรับประกัน" };
+    const r = app.addReport({ kind: s.report as any, title: `${titles[s.report]} (ตามกำหนด)`, desc: `รายงานตามกำหนดสำหรับ ${s.recipients}` });
+    app.addSend({ t: Date.now(), report: r.title, to: s.recipients, channel: "ในระบบ", status: "พร้อมดาวน์โหลด" });
+    app.toast("รายงานตามกำหนดพร้อมแล้วที่หน้ารายงาน");
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  return null;
+}
+
 function App() {
   return (
+    <AppProvider>
+    <ScheduleWatcher />
+    <Toasts />
     <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, "")}>
       <div className="app">
         <Sidebar />
@@ -39,6 +67,7 @@ function App() {
         </main>
       </div>
     </BrowserRouter>
+    </AppProvider>
   );
 }
 

@@ -10,7 +10,7 @@ import { fmtBaht, fmtM, lineLabel, thaiDate, STATUS_TH } from "../engine/format"
 import { LEGEND_MAIN } from "../data";
 import { useApp } from "../store";
 
-const TYPE_TH: Record<string, string> = { motor: "จ่ายเคลมรถยนต์ (Motor)", health: "จ่ายเคลมสุขภาพ (Health)", property: "จ่ายเคลมทรัพย์สิน (Property)" };
+const TYPE_TH: Record<string, string> = { motor: "จ่ายเคลมรถยนต์ (Motor)", health: "จ่ายเคลมสุขภาพ (Health)", property: "จ่ายเคลมทรัพย์สิน (Property)", misc: "จ่ายเคลมเบ็ดเตล็ด (Misc.)" };
 
 export default function Overview() {
   const { fc, threshold, ds } = useApp();

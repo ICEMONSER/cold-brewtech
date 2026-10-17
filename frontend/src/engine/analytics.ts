@@ -61,16 +61,16 @@ export const monthTh = (m: number) => MONTH_TH[m];
 /** Insight cards for the claims page. */
 export function insights(ds: Datasets, f: Forecast, today: string) {
   const out: { tone: "warn" | "info"; icon: "bars" | "coins" | "warn"; title: string; body: string }[] = [];
-  const big = f.contributors.filter((c) => c.kind === "scheduled" && c.amount >= 1e6);
+  const big = f.contributors.filter((c) => c.kind === "scheduled" && c.amount >= 10e6);
   const bigLine = big.length ? mostCommon(big.map((b) => b.line)) : null;
   const uw = underwriting(ds, today);
   if (big.length) {
     const days = big.map((b) => b.day);
     out.push({ tone: "warn", icon: "warn", title: `มีเคลม${lineLabel(bigLine!)}มูลค่าสูงที่กำหนดจ่ายในช่วง${Math.min(...days) > f.horizon / 2 ? "ครึ่งหลัง" : "นี้"}`,
-      body: `เคลมที่มีมูลค่ามากกว่า 1 ล้านบาท จำนวน ${big.length} รายการ (รวม ${mNum(big.reduce((a, b) => a + b.amount, 0))} ล้านบาท) กำหนดจ่ายในช่วงวันที่ ${Math.min(...days)}–${Math.max(...days)} ซึ่งอาจกดดันกระแสเงินสดในระยะสั้น${uw.result < 0 ? ` แม้ผลรับประกันโดยรวมยังขาดทุนเล็กน้อยที่ ${mNum(-uw.result)} ล้านบาท` : ""}` });
+      body: `เคลมที่มีมูลค่ามากกว่า 10 ล้านบาท จำนวน ${big.length} รายการ (รวม ${mNum(big.reduce((a, b) => a + b.amount, 0))} ล้านบาท) กำหนดจ่ายในช่วงวันที่ ${Math.min(...days)}–${Math.max(...days)} ซึ่งอาจกดดันกระแสเงินสดในระยะสั้น${uw.result < 0 ? ` แม้ผลรับประกันโดยรวมขาดทุน ${mNum(-uw.result)} ล้านบาท` : ""}` });
   }
   out.push({ tone: "info", icon: "bars", title: "ผลกำไรจากการรับประกัน (Profitability)",
-    body: `${uw.result < 0 ? "ขาดทุน" : "กำไร"} ${mNum(Math.abs(uw.result))} ล้านบาท (Combined Ratio ${(uw.combined * 100).toFixed(0)}%) สะท้อนผลการรับประกันจากเบี้ยประกัน ค่าสินไหมเกิดขึ้น และค่าใช้จ่ายในการรับประกัน ใน 30 วันที่ผ่านมา` });
+    body: `${uw.result < 0 ? "ขาดทุน" : "กำไร"} ${mNum(Math.abs(uw.result))} ล้านบาท (Combined Ratio ${(uw.combined * 100).toFixed(1)}%) สะท้อนผลการรับประกันจากเบี้ยประกัน ค่าสินไหมเกิดขึ้น และค่าใช้จ่ายในการรับประกัน ใน 30 วันที่ผ่านมา` });
   out.push({ tone: "info", icon: "coins", title: "ผลกระทบต่อสภาพคล่อง (Liquidity)",
     body: `คาดการณ์จ่ายเคลมรวม ${mNum(f.totals.claims)} ล้านบาท ซึ่งเป็นกระแสเงินสดจ่าย อาจเกิดขึ้นคนละช่วงเวลากับการรับรู้ค่าสินไหม ${mNum(uw.incurred)} ล้านบาท` });
   return out;

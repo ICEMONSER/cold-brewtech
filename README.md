@@ -8,7 +8,7 @@ Concept: ExpresSO NB Co., Ltd. (Isaree Wongariyaporn, Ramida Khampao).
 
 The website is a complete working app. It is not a mock-up: every number is calculated from data, and every button works. There is no server. All calculation runs in the visitor's browser, and data never leaves the browser.
 
-- **Data:** the app ships with sample data (ข้อมูลสมมติ) for a fictional "บริษัทประกัน A". You can replace each of the five sources with your own CSV.
+- **Data:** the app ships with simulated data (ข้อมูลจำลอง) calibrated to the published FY2024 (ปี 2567) figures of Bangkok Insurance PCL (BKI). See "Sample data basis" below. You can replace each of the five sources with your own CSV.
 - **Hosting:** the site is static, so GitHub Pages is enough to run it.
 
 ## How the concept maps to the app
@@ -31,6 +31,25 @@ When the underwriting result for the last 30 days is negative, a funding window 
 4. **After you confirm:** the loan is added to the forecast: drawdown on the borrowing day, repayment of principal plus interest at the end of the term. It is also listed under ตั้งค่า → บริษัท, where it can be cancelled.
 
 The O/D limit, amount used, interest rates and bank offers can all be edited under ตั้งค่า → บริษัท. The default rates are sample values; replace them with the offers you actually receive.
+
+## Sample data basis: BKI FY2024
+
+Each claim, policy and payment is synthetic, but the generator (`frontend/src/engine/sample.ts`) scales them so the monthly totals equal BKI's published 2024 figures ÷ 12.
+
+| Item | Value used | Source / status |
+|---|---|---|
+| Gross written premium 2024 | ฿31,736.1M | BKI 56-1 One Report 2024 |
+| Net underwriting profit 2024 | ฿1,871.0M → ≈ ฿156M per 30 days | BKI 56-1 One Report 2024 |
+| Net combined ratio 2024 | 90.1% | S&P Global Ratings, Nov 2025 |
+| Net earned premium per 30 days | ≈ ฿1,575M = 1,871 ÷ (1 − 0.901) ÷ 12 | Derived |
+| Claims incurred / expenses per 30 days | ≈ ฿866M / ฿553M (loss ratio 55% + expense ratio 35.1%) | Split is **assumed**; only the 90.1% total is published |
+| Cash and cash equivalents, 31 Dec 2024 | ฿789.5M (opening cash) | BKIH consolidated balance sheet |
+| Claims per year | 258,027 (87,937 + 170,090) → ≈ 21,500 open claims | BKI 56-1 One Report 2024 (open count derived) |
+| Premium mix | Motor 46%, Fire & IAR 23%, PA & health 14%, other 17% | S&P (1H2025 direct premium, the closest published split) |
+| Minimum cash ฿500M, O/D limit ฿300M (฿250M used), bank loan rates | Demo values | **Assumed**; edit in ตั้งค่า |
+| Cash dip on day 20, large property losses, reinsurance recovery on day 21 | Demo story | **Assumed** |
+
+Because BKI's 2024 underwriting was profitable (combined ratio 90.1%), the funding popup does not open automatically for the base plan. It opens when a simulated scenario falls below the minimum cash, or from the "จัดหาเงินทุน" button on the alert.
 
 ## The forecast
 

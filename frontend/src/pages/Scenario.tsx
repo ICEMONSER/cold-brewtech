@@ -116,7 +116,7 @@ export default function Scenario() {
           <div className="sc-block reserve">
             <div className="sc-lbl">เงินสำรองขั้นต่ำ <InfoTip text="เกณฑ์เงินสดขั้นต่ำที่ใช้เปรียบเทียบในสถานการณ์นี้ (ไม่เปลี่ยนค่าในตั้งค่าระบบ)" /></div>
             <div className="input"><input type="number" min={0} value={reserve} onChange={(e) => setReserve(Math.max(0, +e.target.value || 0))} aria-label="เงินสำรองขั้นต่ำ (ล้านบาท)" /><span className="suffix">ล้านบาท</span></div>
-            <div className="hint" style={{ marginTop: 9 }}>ช่วงแนะนำ 30 – 60 ล้านบาท</div>
+            <div className="hint" style={{ marginTop: 9 }}>ช่วงแนะนำ 400 – 700 ล้านบาท</div>
           </div>
 
           <button className={"btn sc-btn" + (dirty ? " pulse" : "")} onClick={() => { setApplied({ shock, delay, reserve }); app.toast("คำนวณสถานการณ์ใหม่แล้ว"); }}><I.Calculator size={22} />คำนวณสถานการณ์</button>
@@ -241,7 +241,7 @@ function ReserveModal({ current, trough, onClose, onUse, onSave, onSettings }: {
     <Modal title="ทบทวนระดับเงินสำรองขั้นต่ำ" onClose={onClose} footer={<><button className="btn btn-ghost mbtn" onClick={onSettings}>ไปที่ตั้งค่า</button><button className="btn btn-ghost mbtn" onClick={() => onUse(v)}>ใช้เฉพาะสถานการณ์นี้</button><button className="btn mbtn" onClick={() => onSave(v)}>บันทึกเป็นค่าระบบ</button></>}>
       <p>เกณฑ์ปัจจุบัน {current} ล้านบาท · เงินสดต่ำสุดในสถานการณ์ {fmtM(trough)}</p>
       <label className="mfield"><span>เงินสำรองขั้นต่ำใหม่ (ล้านบาท)</span><input type="number" min={0} value={v} onChange={(e) => setV(Math.max(0, +e.target.value || 0))} /></label>
-      <p className="muted small">ช่วงแนะนำ 30–60 ล้านบาท ควรสอดคล้องกับนโยบายบริหารความเสี่ยงด้านสภาพคล่องและเงินกองทุนตามความเสี่ยง (CAR) ที่ คปภ. กำหนด</p>
+      <p className="muted small">ช่วงแนะนำ 400–700 ล้านบาท (ประมาณ 50–90% ของเงินสดต้นงวด) ควรสอดคล้องกับนโยบายบริหารความเสี่ยงด้านสภาพคล่องและเงินกองทุนตามความเสี่ยง (CAR) ที่ คปภ. กำหนด</p>
     </Modal>
   );
 }

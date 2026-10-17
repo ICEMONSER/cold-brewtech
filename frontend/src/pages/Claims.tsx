@@ -88,7 +88,7 @@ export default function Claims() {
         <Kpi className="circ" icon={<I.Doc size={24} />} label="เคลมเปิดอยู่" value={`${fmtInt(rows.length)} รายการ`} onClick={() => { setAll(true); setPage(0); }} />
         <Kpi className="circ" icon={<I.Coins size={24} />} label="คาดการณ์จ่ายเคลม" value={fmtM(expTotal, 0)} unit="ล้านบาท" />
         <Kpi className="circ" icon={<I.Shield size={24} />} label="ค่าสินไหมเกิดขึ้น" info={`ค่าสินไหมของเคลมที่เกิดเหตุใน 30 วันที่ผ่านมา (จ่ายแล้ว + สำรอง) ตั้งแต่ ${thaiDate(uw.from)}`} value={fmtM(uw.incurred, 0)} unit="ล้านบาท" />
-        <Kpi className="circ" icon={<I.Bars4 size={24} />} label="Combined Ratio" info="(ค่าสินไหมเกิดขึ้น + ค่าใช้จ่ายในการรับประกัน) ÷ เบี้ยประกันรับรู้รายได้ ใน 30 วันที่ผ่านมา มากกว่า 100% คือขาดทุนจากการรับประกัน" value={`${(uw.combined * 100).toFixed(0)}%`} />
+        <Kpi className="circ" icon={<I.Bars4 size={24} />} label="Combined Ratio" info="(ค่าสินไหมเกิดขึ้น + ค่าใช้จ่ายในการรับประกัน) ÷ เบี้ยประกันรับรู้รายได้ ใน 30 วันที่ผ่านมา มากกว่า 100% คือขาดทุนจากการรับประกัน" value={`${(uw.combined * 100).toFixed(1)}%`} />
       </div>
 
       <div className="cl-row">

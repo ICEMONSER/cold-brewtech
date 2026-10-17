@@ -19,11 +19,11 @@ export type ChatMsg = { id: string; role: "user" | "ai"; text: string; t: number
 export type Bank = { bank: string; product: string; rate: number; fee: number; maxM: number };
 export type Loan = { id: string; t: number; source: string; product: string; amount: number; rate: number; fee: number; drawDate: string; termDays: number; interest: number };
 export const DEFAULT_BANKS: Bank[] = [
-  { bank: "ธนาคารกรุงเทพ", product: "ตั๋วสัญญาใช้เงิน (P/N) ระยะสั้น", rate: 6.1, fee: 0.1, maxM: 100 },
-  { bank: "ธนาคารกสิกรไทย", product: "เงินกู้ระยะสั้นธุรกิจ", rate: 6.25, fee: 0, maxM: 80 },
-  { bank: "ธนาคารไทยพาณิชย์", product: "สินเชื่อหมุนเวียนระยะสั้น", rate: 5.95, fee: 0.25, maxM: 60 },
-  { bank: "ธนาคารกรุงไทย", product: "P/N วงเงินหมุนเวียน", rate: 6.4, fee: 0, maxM: 150 },
-  { bank: "ธนาคารกรุงศรีอยุธยา", product: "เงินกู้ระยะสั้น", rate: 6.3, fee: 0.05, maxM: 50 },
+  { bank: "ธนาคารกรุงเทพ", product: "ตั๋วสัญญาใช้เงิน (P/N) ระยะสั้น", rate: 6.1, fee: 0.1, maxM: 800 },
+  { bank: "ธนาคารกสิกรไทย", product: "เงินกู้ระยะสั้นธุรกิจ", rate: 6.25, fee: 0, maxM: 500 },
+  { bank: "ธนาคารไทยพาณิชย์", product: "สินเชื่อหมุนเวียนระยะสั้น", rate: 5.95, fee: 0.25, maxM: 600 },
+  { bank: "ธนาคารกรุงไทย", product: "P/N วงเงินหมุนเวียน", rate: 6.4, fee: 0, maxM: 1000 },
+  { bank: "ธนาคารกรุงศรีอยุธยา", product: "เงินกู้ระยะสั้น", rate: 6.3, fee: 0.05, maxM: 300 },
 ];
 /** What the funding popup is financing: the base plan, or the scenario being simulated. */
 export type FundCtx = {
@@ -35,11 +35,22 @@ export type FundCtx = {
 export type SendLog = { t: number; report: string; to: string; channel: string; status: string };
 
 const DEFAULT_SETTINGS: Settings = {
-  company: "บริษัทประกัน A", reserveM: 40, leadDays: 7, rules: { below: true, stale: true }, channels: { inApp: true, email: false }, email: "finance@company.co.th",
+  company: "กรุงเทพประกันภัย", reserveM: 500, leadDays: 7, rules: { below: true, stale: true }, channels: { inApp: true, email: false }, email: "finance@company.co.th",
   apiKey: "", model: "claude-sonnet-5-5", useClaude: false,
   schedule: { enabled: false, weekday: 1, time: "09:00", recipients: "ทีม Finance", report: "forecast" },
-  od: { limitM: 20, usedM: 15, rate: 7.25 }, banks: DEFAULT_BANKS,
+  od: { limitM: 300, usedM: 250, rate: 7.25 }, banks: DEFAULT_BANKS,
 };
+
+/* Data version: when the sample basis changes (now BKI FY2024), reset values tied to the old scale. */
+const DATA_VERSION = "bki-2024";
+try {
+  if (localStorage.getItem("cbt.dataVersion") !== DATA_VERSION) {
+    ["cbt.loans", "cbt.chat", "cbt.scenarios", "cbt.audit"].forEach((k) => localStorage.removeItem(k));
+    const st = JSON.parse(localStorage.getItem("cbt.settings") ?? "null");
+    if (st) { delete st.company; delete st.reserveM; delete st.od; delete st.banks; localStorage.setItem("cbt.settings", JSON.stringify(st)); }
+    localStorage.setItem("cbt.dataVersion", DATA_VERSION);
+  }
+} catch { /* storage unavailable */ }
 
 const load = <T,>(k: string, d: T): T => { try { const v = localStorage.getItem(k); return v ? { ...d, ...JSON.parse(v) } : d; } catch { return d; } };
 const loadArr = <T,>(k: string, d: T[]): T[] => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } };
@@ -78,7 +89,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [uploadMeta, setUploadMeta] = useState<Partial<Record<SourceKey, SourceMeta>>>(() => load("cbt.uploadMeta", {}));
   const [settings, setSettings] = useState<Settings>(() => { const s = load("cbt.settings", DEFAULT_SETTINGS); return { ...DEFAULT_SETTINGS, ...s, od: { ...DEFAULT_SETTINGS.od, ...s.od }, banks: s.banks?.length ? s.banks : DEFAULT_BANKS, rules: { ...DEFAULT_SETTINGS.rules, ...s.rules }, channels: { ...DEFAULT_SETTINGS.channels, ...s.channels }, schedule: { ...DEFAULT_SETTINGS.schedule, ...s.schedule } }; });
   const [horizon, setH] = useState<number>(() => load("cbt.view", { horizon: 30 }).horizon);
-  const [audit, setAudit] = useState<Audit[]>(() => loadArr("cbt.audit", [{ t: Date.UTC(2024, 10, 5, 3, 24), action: "แก้ไขเกณฑ์สภาพคล่องขั้นต่ำ\nจาก 30 เป็น 40 ล้านบาท", user: "Finance Admin" }]));
+  const [audit, setAudit] = useState<Audit[]>(() => loadArr("cbt.audit", [{ t: Date.UTC(2024, 10, 5, 3, 24), action: "แก้ไขเกณฑ์สภาพคล่องขั้นต่ำ\nจาก 400 เป็น 500 ล้านบาท", user: "Finance Admin" }]));
   const [created, setCreated] = useState<ReportItem[]>(() => loadArr("cbt.reports", []));
   const [scenarios, setScenarios] = useState<SavedScenario[]>(() => loadArr("cbt.scenarios", []));
   const [chat, setChatState] = useState<ChatMsg[]>(() => loadArr("cbt.chat", []));

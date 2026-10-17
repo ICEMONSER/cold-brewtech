@@ -97,9 +97,9 @@ export function answer(question: string, c: Ctx): Answer {
     const topLine = Object.entries(byLine).sort((a, b) => b[1] - a[1]);
     const recBefore = f.series.filter((p) => p.day <= f.trough.day).reduce((a, p) => a + p.receipts, 0);
     const recAfter = f.totals.receipts - recBefore;
-    const big = before.filter((x) => x.amount >= 1e6);
+    const big = before.filter((x) => x.amount >= 10e6);
     steps.reason.push(`ช่วงวันที่ 1–${f.trough.day}: จ่ายเคลม ${fmtM(before.reduce((a, x) => a + x.amount, 0))} แต่รับเงินเพียง ${fmtM(recBefore)}`, `เงินรับส่วนใหญ่ ${fmtM(recAfter)} เข้าหลังวันที่ ${f.trough.day}`, `แยกตามประเภท: ${topLine.map(([l, v]) => `${lineLabel(l)} ${fmtM(v)}`).join(", ")}`);
-    text = `ความเสี่ยงหลักคือจังหวะเวลาไม่ตรงกัน ช่วงวันที่ 1–${f.trough.day} มีเคลมครบกำหนดจ่ายรวม ${fmtM(before.reduce((a, x) => a + x.amount, 0))} โดยเฉพาะเคลม${lineLabel(topLine[0]?.[0] ?? "")} (${fmtM(topLine[0]?.[1] ?? 0)})${big.length ? ` และเคลมมูลค่าเกิน 1 ล้านบาท ${big.length} รายการ` : ""} ขณะที่เงินรับส่วนใหญ่ ${fmtM(recAfter)} รวมถึงเงินจากผู้รับประกันภัยต่อจะเข้าหลังวันที่ ${f.trough.day} ทำให้เงินสดต่ำสุดอยู่ที่ ${fmtM(f.trough.cash)}`;
+    text = `ความเสี่ยงหลักคือจังหวะเวลาไม่ตรงกัน ช่วงวันที่ 1–${f.trough.day} มีเคลมครบกำหนดจ่ายรวม ${fmtM(before.reduce((a, x) => a + x.amount, 0))} โดยเฉพาะเคลม${lineLabel(topLine[0]?.[0] ?? "")} (${fmtM(topLine[0]?.[1] ?? 0)})${big.length ? ` และเคลมมูลค่าเกิน 10 ล้านบาท ${big.length} รายการ` : ""} ขณะที่เงินรับส่วนใหญ่ ${fmtM(recAfter)} รวมถึงเงินจากผู้รับประกันภัยต่อจะเข้าหลังวันที่ ${f.trough.day} ทำให้เงินสดต่ำสุดอยู่ที่ ${fmtM(f.trough.cash)}`;
     steps.act.push({ label: "ดูพยากรณ์รายสัปดาห์", kind: "nav", to: "/forecast" }, { label: "ดูเคลมมูลค่าสูง", kind: "nav", to: "/claims" });
   } else if (has(q, "ใหญ่", "สูงสุด", "มากที่สุด", "top", "largest", "biggest")) {
     intent = "top";

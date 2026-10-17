@@ -2,12 +2,13 @@
  * otherwise compare bank loan offers by total cost and let the user choose. */
 import { useEffect, useMemo, useState } from "react";
 import { underwriting } from "../engine/analytics";
-import { forecast } from "../engine/forecast";
-import { addDays, fmtBaht, fmtM, mNum, thaiDate } from "../engine/format";
-import { useApp } from "../store";
+import { forecast, type Forecast } from "../engine/forecast";
+import { addDays, fmtBaht, fmtM, thaiDate } from "../engine/format";
+import { useApp, type FundCtx } from "../store";
 import { Modal } from "./ui";
 
-export function useFundingNeed() {
+/** Funding context for the base plan: shown when underwriting makes a loss. */
+export function useBaseFund(): FundCtx & { show: boolean } {
   const { ds, today, threshold, horizon, loans } = useApp();
   return useMemo(() => {
     const uw = underwriting(ds, today);
@@ -16,40 +17,61 @@ export function useFundingNeed() {
     const loss = Math.max(0, -uw.result);
     const need = shortfall > 0 ? Math.ceil(shortfall / 1e6) * 1e6 : Math.ceil(loss / 1e6) * 1e6;
     const firstBreach = f.series.find((p) => p.cash < threshold)?.day;
-    const drawDay = Math.max(2, (firstBreach ?? 2) - 1);
-    return { uw, f, shortfall, loss, need, drawDay, show: uw.result < 0 && need > 0 && (shortfall > 0 || loans.length === 0) };
+    return {
+      key: `base:${Math.round(need / 1e5)}:${loans.length}`, kind: "base" as const, title: "ขาดทุนจากการรับประกัน — จัดหาเงินทุน",
+      dockLabel: `ขาดทุนรับประกัน ${fmtM(uw.result)} · กดเพื่อเลือกแหล่งกู้`,
+      need, shortfall, troughCash: f.trough.cash, troughDay: f.trough.day, drawDay: Math.max(2, (firstBreach ?? 2) - 1), threshold,
+      headline: { label: "ผลรับประกัน 30 วัน", value: fmtM(uw.result), sub: `Combined Ratio ${(uw.combined * 100).toFixed(0)}%` },
+      sim: (extra) => forecast({ ...ds, ledger: [...ds.ledger, ...extra] }, { horizon, today, threshold }),
+      show: uw.result < 0 && need > 0 && (shortfall > 0 || loans.length === 0),
+    };
   }, [ds, today, threshold, horizon, loans.length]);
 }
+
+/** Build a funding context for any simulated forecast (used by the scenario page). */
+export function scenarioFundCtx(f: Forecast, threshold: number, label: string, sim: FundCtx["sim"]): FundCtx | null {
+  const shortfall = Math.max(0, threshold - f.trough.cash);
+  if (shortfall <= 0) return null;
+  const firstBreach = f.series.find((p) => p.cash < threshold)?.day ?? f.trough.day;
+  const need = Math.ceil(shortfall / 1e6) * 1e6;
+  return {
+    key: `sc:${label}:${Math.round(need / 1e5)}`, kind: "scenario", title: `สถานการณ์ ${label} — จัดหาเงินกู้รองรับ`,
+    dockLabel: `สถานการณ์ ${label} ขาด ${fmtM(shortfall)} · กดเพื่อเลือกแหล่งกู้`,
+    need, shortfall, troughCash: f.trough.cash, troughDay: f.trough.day, drawDay: Math.max(2, firstBreach - 1), threshold,
+    headline: { label: "สถานการณ์จำลอง", value: label, sub: `เงินสดปลายงวด ${fmtM(f.closing)}` }, sim,
+  };
+}
+
+const dismissed = (k: string) => { try { return (JSON.parse(sessionStorage.getItem("cbt.fundDismissed") ?? "[]") as string[]).includes(k); } catch { return false; } };
+const dismiss = (k: string) => { try { const a = JSON.parse(sessionStorage.getItem("cbt.fundDismissed") ?? "[]"); sessionStorage.setItem("cbt.fundDismissed", JSON.stringify([...a, k].slice(-30))); } catch { /* ignore */ } };
 
 type Opt = { key: string; source: string; product: string; rate: number; fee: number; ok: boolean; why?: string; od?: boolean };
 
 export function FundingWatcher() {
   const app = useApp();
-  const n = useFundingNeed();
-  useEffect(() => {
-    let seen = false; try { seen = sessionStorage.getItem("cbt.fundingSeen") === "1"; } catch { /* ignore */ }
-    if (n.show && !seen) app.setFunding(true);
-  }, [n.show]); // eslint-disable-line react-hooks/exhaustive-deps
-  const close = () => { app.setFunding(false); try { sessionStorage.setItem("cbt.fundingSeen", "1"); } catch { /* ignore */ } };
+  const base = useBaseFund();
+  const ctx: FundCtx | null = app.scenarioFund ?? (base.show ? base : null);
+  useEffect(() => { if (ctx && !dismissed(ctx.key)) app.setFunding(true); }, [ctx?.key]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!ctx && app.funding) app.setFunding(false); }, [ctx]); // eslint-disable-line react-hooks/exhaustive-deps
+  const close = () => { app.setFunding(false); if (ctx) dismiss(ctx.key); };
   return (
     <>
-      {app.funding && <FundingModal onClose={close} />}
+      {app.funding && <FundingModal key={ctx?.key ?? "manual"} ctx={ctx ?? base} onClose={close} />}
       {/* "ไว้ภายหลัง" docks the request as a tab with a red dot; click to reopen and confirm any time */}
-      {n.show && !app.funding && (
+      {ctx && !app.funding && (
         <button className="fund-dock" onClick={() => app.setFunding(true)} aria-label="เปิดหน้าจัดหาเงินทุนเพื่อยืนยันกู้">
           <span className="fund-dot" aria-hidden="true" />
-          <span className="fund-dock-t">รอยืนยันกู้เงิน</span>
-          <span className="fund-dock-v">{fmtM(n.need)}</span>
-          <span className="fund-dock-s">ขาดทุนรับประกัน {fmtM(n.uw.result)} · กดเพื่อเลือกแหล่งกู้</span>
+          <span className="fund-dock-t">{ctx.kind === "scenario" ? "สถานการณ์จำลอง: รอยืนยันกู้" : "รอยืนยันกู้เงิน"}</span>
+          <span className="fund-dock-v">{fmtM(ctx.need)}</span>
+          <span className="fund-dock-s">{ctx.dockLabel}</span>
         </button>
       )}
     </>
   );
 }
 
-function FundingModal({ onClose }: { onClose: () => void }) {
+function FundingModal({ ctx: n, onClose }: { ctx: FundCtx; onClose: () => void }) {
   const app = useApp();
-  const n = useFundingNeed();
   const od = app.settings.od;
   const odLeft = Math.max(0, od.limitM - od.usedM) * 1e6;
   const [amountM, setAmountM] = useState(Math.max(1, n.need / 1e6));
@@ -73,26 +95,25 @@ function FundingModal({ onClose }: { onClose: () => void }) {
   const drawDate = addDays(app.today, n.drawDay - 1);
   const after = useMemo(() => {
     if (!chosen) return null;
-    const ds = { ...app.ds, ledger: [...app.ds.ledger, { date: drawDate, type: "other_receipt" as const, amount: amount * (1 - chosen.fee / 100), status: "expected" as const, description: "loan" }, { date: addDays(drawDate, term), type: "other_payment" as const, amount: amount + chosen.interest, status: "expected" as const, description: "repay" }] };
-    return forecast(ds, { horizon: app.horizon, today: app.today, threshold: app.threshold });
-  }, [chosen, app.ds, drawDate, amount, term, app.horizon, app.today, app.threshold]);
+    return n.sim([{ date: drawDate, type: "other_receipt", amount: amount * (1 - chosen.fee / 100), status: "expected", description: "loan" }, { date: addDays(drawDate, term), type: "other_payment", amount: amount + chosen.interest, status: "expected", description: "repay" }]);
+  }, [chosen, n, drawDate, amount, term]);
 
   const confirm = () => {
     if (!chosen) return;
     app.addLoan({ source: chosen.source, product: chosen.product, amount, rate: chosen.rate, fee: chosen.fee, drawDate, termDays: term, interest: chosen.interest });
     if (chosen.od) app.saveSettings({ od: { ...od, usedM: od.usedM + amountM } });
-    app.log(`อนุมัติกู้ ${chosen.source} ${amountM} ล้านบาท ดอกเบี้ย ${chosen.rate}% ระยะ ${term} วัน (เบิก ${thaiDate(drawDate)})`);
+    app.log(`${n.kind === "scenario" ? "[รองรับสถานการณ์] " : ""}อนุมัติกู้ ${chosen.source} ${amountM} ล้านบาท ดอกเบี้ย ${chosen.rate}% ระยะ ${term} วัน (เบิก ${thaiDate(drawDate)})`);
     app.toast(`บันทึกการกู้ ${fmtM(amount)} กับ ${chosen.source} แล้ว ใส่ในพยากรณ์เงินสดเรียบร้อย`);
     onClose();
   };
 
   const second = banks[1];
   return (
-    <Modal wide title="ขาดทุนจากการรับประกัน — จัดหาเงินทุน" onClose={onClose}
+    <Modal wide title={n.title} onClose={onClose}
       footer={<><button className="btn btn-ghost mbtn" onClick={onClose}>ไว้ภายหลัง</button><button className="btn mbtn" disabled={!chosen} onClick={confirm}>{chosen ? `ยืนยันกู้ ${fmtM(amount)} กับ ${chosen.od ? "O/D" : chosen.source}` : "เลือกแหล่งเงินกู้"}</button></>}>
       <div className="fund-sum">
-        <div><small>ผลรับประกัน 30 วัน</small><b className="red">{fmtM(n.uw.result)}</b><em>Combined Ratio {(n.uw.combined * 100).toFixed(0)}%</em></div>
-        <div><small>เงินสดต่ำสุด</small><b>{fmtM(n.f.trough.cash)}</b><em>วันที่ {n.f.trough.day} · เกณฑ์ {fmtM(app.threshold)}</em></div>
+        <div><small>{n.headline.label}</small><b className="red">{n.headline.value}</b><em>{n.headline.sub}</em></div>
+        <div><small>เงินสดต่ำสุด</small><b>{fmtM(n.troughCash)}</b><em>วันที่ {n.troughDay} · เกณฑ์ {fmtM(n.threshold)}</em></div>
         <div><small>เงินที่ต้องจัดหา</small><b className="red">{fmtM(n.need)}</b><em>{n.shortfall > 0 ? `ปิดช่องว่างสภาพคล่อง ${fmtM(n.shortfall)}` : "ชดเชยผลขาดทุน"}</em></div>
       </div>
 
@@ -126,8 +147,8 @@ function FundingModal({ onClose }: { onClose: () => void }) {
           ))}
         </tbody>
       </table>
-      {after && chosen && <p className="fund-after">หลังกู้: เงินสดต่ำสุด <b>{fmtM(n.f.trough.cash)} → {fmtM(after.trough.cash)}</b> {after.trough.cash >= app.threshold ? <span className="green">ไม่ต่ำกว่าเกณฑ์</span> : <span className="red">ยังต่ำกว่าเกณฑ์ {fmtM(app.threshold - after.trough.cash)}</span>} · ชำระคืน {fmtM(amount + chosen.interest, 2)} วันที่ {thaiDate(addDays(drawDate, term))}</p>}
-      <p className="muted small">อัตราดอกเบี้ยธนาคารเป็นค่าตัวอย่าง แก้ไขให้ตรงกับข้อเสนอจริงได้ที่ ตั้งค่า → บริษัท · ต้นทุนรวม = เงินกู้ × อัตราดอกเบี้ย × วัน/365 + ค่าธรรมเนียม · ผลขาดทุน {mNum(n.loss)} ล้านบาท</p>
+      {after && chosen && <p className="fund-after">หลังกู้: เงินสดต่ำสุด <b>{fmtM(n.troughCash)} → {fmtM(after.trough.cash)}</b> {after.trough.cash >= n.threshold ? <span className="green">ไม่ต่ำกว่าเกณฑ์</span> : <span className="red">ยังต่ำกว่าเกณฑ์ {fmtM(n.threshold - after.trough.cash)}</span>} · ชำระคืน {fmtM(amount + chosen.interest, 2)} วันที่ {thaiDate(addDays(drawDate, term))}</p>}
+      <p className="muted small">อัตราดอกเบี้ยธนาคารเป็นค่าตัวอย่าง แก้ไขให้ตรงกับข้อเสนอจริงได้ที่ ตั้งค่า → บริษัท · ต้นทุนรวม = เงินกู้ × อัตราดอกเบี้ย × วัน/365 + ค่าธรรมเนียม</p>
     </Modal>
   );
 }

@@ -6,6 +6,7 @@ import { InfoTip, PageHeader } from "../components/Shell";
 import { Modal } from "../components/ui";
 import * as I from "../components/icons";
 import { forecast } from "../engine/forecast";
+import { scenarioFundCtx } from "../components/Funding";
 import { addDays, diffDays, fmtM, mNum } from "../engine/format";
 import type { Datasets } from "../engine/types";
 import { useApp } from "../store";
@@ -62,6 +63,14 @@ export default function Scenario() {
   const dirty = shock !== applied.shock || delay !== applied.delay || reserve !== applied.reserve;
   const extra = sc.totals.claims - base.totals.claims;
   const label = `${pct(applied.shock)}${applied.delay ? `, รับช้า ${applied.delay} วัน` : ""}`;
+
+  // a shortfall in the simulated scenario opens the funding popup (O/D first, else cheapest bank)
+  useEffect(() => {
+    const ctx = scenarioFundCtx(sc, thr, `เคลม ${label}${actions.length ? ` + ${actions.length} มาตรการ` : ""}`, (extra) =>
+      forecast({ ...sds, ledger: [...sds.ledger, ...extra] }, { horizon, today, threshold: thr, claimShock: applied.shock, receiptDelay: applied.delay }));
+    app.setScenarioFund(ctx);
+  }, [sc, thr, label, actions.length, sds, horizon, today, applied]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => app.setScenarioFund(null), []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const save = () => {
     app.saveScenario({ shock: applied.shock, delay: applied.delay, reserveM: applied.reserve, closing: sc.closing, trough: sc.trough.cash, troughDay: sc.trough.day, short: short(sc) });
@@ -156,7 +165,7 @@ export default function Scenario() {
                 <div className="danger ok"><span className="d-ico"><I.Shield size={26} /></span><div><b>ในสถานการณ์นี้ เงินสดไม่ต่ำกว่าเงินสำรองขั้นต่ำ</b><p>เงินสดต่ำสุด {fmtM(sc.trough.cash)} สูงกว่าเกณฑ์ {fmtM(sc.trough.cash - thr)}</p></div></div>
               )}
               {OPTS.map(([ic, t, s, k]) => (
-                <button key={t} className="opt" onClick={() => setModal(k)}><span className="o-ico">{ic}</span><span className="o-txt"><b>{t}</b><small>{s}</small></span><I.ChevronRight size={18} /></button>
+                <button key={t} className="opt" onClick={() => (k === "credit" && short(sc) > 0 ? app.setFunding(true) : setModal(k))}><span className="o-ico">{ic}</span><span className="o-txt"><b>{t}</b><small>{s}</small></span><I.ChevronRight size={18} /></button>
               ))}
               <div className="sc-warn"><I.Info size={18} /><span>ผลลัพธ์เป็นเพียงการประมาณการ<br />ไม่รับประกันว่าจะเกิดขึ้นจริง กรุณาพิจารณาเพิ่มเติม<br />ร่วมกับคณะกรรมการบริหารความเสี่ยง</span></div>
               <button className="btn sc-save" onClick={save}><I.Save size={22} />บันทึกสถานการณ์</button>

@@ -3,7 +3,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 import { forecast, type Forecast } from "./engine/forecast";
 import { addDays, todayISO } from "./engine/format";
 import { sampleData } from "./engine/sample";
-import type { Datasets, SourceKey, SourceMeta } from "./engine/types";
+import type { Datasets, Ledger, SourceKey, SourceMeta } from "./engine/types";
 
 export type Settings = {
   company: string; reserveM: number; leadDays: number;
@@ -25,6 +25,13 @@ export const DEFAULT_BANKS: Bank[] = [
   { bank: "ธนาคารกรุงไทย", product: "P/N วงเงินหมุนเวียน", rate: 6.4, fee: 0, maxM: 150 },
   { bank: "ธนาคารกรุงศรีอยุธยา", product: "เงินกู้ระยะสั้น", rate: 6.3, fee: 0.05, maxM: 50 },
 ];
+/** What the funding popup is financing: the base plan, or the scenario being simulated. */
+export type FundCtx = {
+  key: string; kind: "base" | "scenario"; title: string; dockLabel: string;
+  need: number; shortfall: number; troughCash: number; troughDay: number; drawDay: number; threshold: number;
+  headline: { label: string; value: string; sub: string };
+  sim: (extra: Ledger[]) => Forecast;
+};
 export type SendLog = { t: number; report: string; to: string; channel: string; status: string };
 
 const DEFAULT_SETTINGS: Settings = {
@@ -47,6 +54,7 @@ type Ctx = {
   scenarios: SavedScenario[]; saveScenario: (s: Omit<SavedScenario, "id" | "t">) => void;
   loans: Loan[]; addLoan: (l: Omit<Loan, "id" | "t">) => void; cancelLoan: (id: string) => void; baseDs: Datasets;
   funding: boolean; setFunding: (v: boolean) => void;
+  scenarioFund: FundCtx | null; setScenarioFund: (c: FundCtx | null) => void;
   chat: ChatMsg[]; setChat: (f: (m: ChatMsg[]) => ChatMsg[]) => void;
   sends: SendLog[]; addSend: (s: SendLog) => void;
   toast: (msg: string) => void; toasts: { id: number; msg: string }[];
@@ -76,6 +84,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [chat, setChatState] = useState<ChatMsg[]>(() => loadArr("cbt.chat", []));
   const [loans, setLoans] = useState<Loan[]>(() => loadArr("cbt.loans", []));
   const [funding, setFunding] = useState(false);
+  const [scenarioFund, setScenarioFund] = useState<FundCtx | null>(null);
   const [sends, setSends] = useState<SendLog[]>(() => loadArr("cbt.sends", []));
   const [toasts, setToasts] = useState<{ id: number; msg: string }[]>([]);
   const [pendingScenario, setPendingScenario] = useState<{ shock?: number; delay?: number } | null>(null);
@@ -134,7 +143,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     reports: [...created, ...DEFAULT_REPORTS],
     addReport: (r) => { const item = { ...r, id: `r-${Date.now()}`, createdAt: Date.now() }; setCreated((c) => { const n = [item, ...c]; save("cbt.reports", n); return n; }); return item; },
     removeReport: (id) => setCreated((c) => { const n = c.filter((x) => x.id !== id); save("cbt.reports", n); return n; }),
-    loans, baseDs, funding, setFunding,
+    loans, baseDs, funding, setFunding, scenarioFund, setScenarioFund,
     addLoan: (l) => setLoans((c) => { const n = [...c, { ...l, id: `l-${Date.now()}`, t: Date.now() }]; save("cbt.loans", n); return n; }),
     cancelLoan: (id) => setLoans((c) => { const n = c.filter((x) => x.id !== id); save("cbt.loans", n); return n; }),
     saveScenario: (s) => setScenarios((c) => { const n = [{ ...s, id: `s-${Date.now()}`, t: Date.now() }, ...c].slice(0, 50); save("cbt.scenarios", n); return n; }),

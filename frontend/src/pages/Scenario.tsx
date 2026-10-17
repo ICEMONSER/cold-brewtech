@@ -6,34 +6,15 @@ import { InfoTip, PageHeader } from "../components/Shell";
 import { Modal } from "../components/ui";
 import * as I from "../components/icons";
 import { forecast } from "../engine/forecast";
-import { scenarioFundCtx } from "../components/Funding";
+import { applyActions, type Action } from "../engine/scenario";
 import { addDays, diffDays, fmtM, mNum } from "../engine/format";
 import type { Datasets } from "../engine/types";
 import { useApp } from "../store";
 
-type Action = { id: string; kind: "credit" | "sell" | "defer" | "collect"; amount: number; day: number; label: string };
 const SHOCK_POS = (v: number) => ((v + 20) / 40) * 86; // knob scale as drawn in the reference
 const DELAY_TICKS = [[0, 2], [7, 25.5], [14, 47.5], [21, 72], [30, 96.5]];
 
 /** Apply mitigation actions to a copy of the data. */
-function applyActions(ds: Datasets, acts: Action[], today: string, troughDay: number): Datasets {
-  if (!acts.length) return ds;
-  const ledger = [...ds.ledger];
-  let payments = ds.payments;
-  for (const a of acts) {
-    if (a.kind === "defer") {
-      // postpone the largest approved payments due on/before the trough until after it
-      const cutoff = addDays(today, troughDay - 1);
-      const cands = ds.payments.filter((p) => p.status === "scheduled" && p.payment_date <= cutoff).sort((x, y) => y.amount - x.amount);
-      const pick = new Set<typeof cands[number]>(); let acc = 0;
-      for (const p of cands) { if (acc >= a.amount) break; pick.add(p); acc += p.amount; }
-      payments = payments.map((p) => (pick.has(p) ? { ...p, payment_date: addDays(today, a.day - 1) } : p));
-    } else {
-      ledger.push({ date: addDays(today, a.day - 1), type: a.kind === "collect" ? "premium_receipt" : "other_receipt", amount: a.amount, status: "expected", description: a.label });
-    }
-  }
-  return { ...ds, ledger, payments };
-}
 
 export default function Scenario() {
   const app = useApp();
@@ -64,13 +45,10 @@ export default function Scenario() {
   const extra = sc.totals.claims - base.totals.claims;
   const label = `${pct(applied.shock)}${applied.delay ? `, รับช้า ${applied.delay} วัน` : ""}`;
 
-  // a shortfall in the simulated scenario opens the funding popup (O/D first, else cheapest bank)
+  // a shortfall in the simulated scenario opens the funding popup; the request is kept (and persisted) until a loan covers it
   useEffect(() => {
-    const ctx = scenarioFundCtx(sc, thr, `เคลม ${label}${actions.length ? ` + ${actions.length} มาตรการ` : ""}`, (extra) =>
-      forecast({ ...sds, ledger: [...sds.ledger, ...extra] }, { horizon, today, threshold: thr, claimShock: applied.shock, receiptDelay: applied.delay }));
-    app.setScenarioFund(ctx);
-  }, [sc, thr, label, actions.length, sds, horizon, today, applied]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => () => app.setScenarioFund(null), []); // eslint-disable-line react-hooks/exhaustive-deps
+    app.setScenarioReq(short(sc) > 0 ? { shock: applied.shock, delay: applied.delay, reserveM: applied.reserve, actions, label: `เคลม ${label}${actions.length ? ` + ${actions.length} มาตรการ` : ""}`, horizon } : null);
+  }, [sc, applied, actions, label, horizon]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const save = () => {
     app.saveScenario({ shock: applied.shock, delay: applied.delay, reserveM: applied.reserve, closing: sc.closing, trough: sc.trough.cash, troughDay: sc.trough.day, short: short(sc) });

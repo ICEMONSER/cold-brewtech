@@ -26,16 +26,17 @@
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: #fefefe; }
-body { min-width: 1280px; }
+body { width: 1586px; overflow-x: hidden; }
+html { --z: 1; overflow-x: hidden; }
 button, input { font: inherit; color: inherit; }
 button { cursor: pointer; }
 a { color: inherit; text-decoration: none; }
 svg text { font-family: "Inter", "Noto Sans Thai", sans-serif; }
 
-.app { display: grid; grid-template-columns: 245px 1fr; min-height: 100vh; }
+.app { display: grid; grid-template-columns: 245px 1fr; min-height: calc(100vh / var(--z)); }
 
 /* ---------- sidebar ---------- */
-.sidebar { background: var(--side); color: #fff; padding: 28px 9px 20px 10px; position: sticky; top: 0; height: 100vh; }
+.sidebar { background: var(--side); color: #fff; padding: 28px 9px 20px 10px; position: sticky; top: 0; height: calc(100vh / var(--z)); }
 .brand { display: flex; gap: 10px; align-items: flex-start; padding: 0 0 0 12px; height: 80px; }
 .brand-leaf { margin-top: 1px; flex: none; }
 .brand-name { font-family: "Crimson Pro", Georgia, serif; font-weight: 500; font-size: 25px; white-space: nowrap; line-height: 1; letter-spacing: -.1px; margin-top: 2px; }
@@ -501,7 +502,7 @@ button.updated:hover { color: var(--maroon-2); }
 
 .modal-bg { position: fixed; inset: 0; background: rgba(20, 16, 20, .38); display: flex; align-items: center; justify-content: center; z-index: 100; animation: fade .12s; }
 @keyframes fade { from { opacity: 0 } }
-.modal { background: #fff; border-radius: 12px; width: 560px; max-width: calc(100vw - 32px); max-height: calc(100vh - 60px); display: flex; flex-direction: column; box-shadow: 0 24px 60px rgba(0, 0, 0, .25); font-family: "Noto Sans Thai"; }
+.modal { background: #fff; border-radius: 12px; width: 560px; max-width: calc(100vw / var(--z) - 32px); max-height: calc(100vh / var(--z) - 60px); display: flex; flex-direction: column; box-shadow: 0 24px 60px rgba(0, 0, 0, .25); font-family: "Noto Sans Thai"; }
 .modal.wide { width: 860px; }
 .modal-h { display: flex; justify-content: space-between; align-items: center; padding: 18px 22px 10px; }
 .modal-h h3 { margin: 0; font-size: 19px; }

@@ -73,4 +73,17 @@ function App() {
   );
 }
 
+/* Fit the 1586-px design to any screen width: scale the whole page proportionally. */
+const DESIGN_W = 1586;
+function fit() {
+  const root = document.documentElement;
+  root.style.zoom = "1";
+  const w = root.clientWidth || window.innerWidth; // excludes the vertical scrollbar
+  const z = Math.min(2.4, Math.max(0.5, w / DESIGN_W));
+  root.style.zoom = String(z);
+  root.style.setProperty("--z", String(z));
+}
+fit();
+window.addEventListener("resize", fit);
+
 createRoot(document.getElementById("root")!).render(<App />);

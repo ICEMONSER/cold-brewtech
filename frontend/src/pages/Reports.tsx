@@ -130,7 +130,7 @@ function Preview({ r, title, onSchedule }: { r: ReportItem; title: string; onSch
           <span className="unit" style={{ position: "absolute", left: 15, top: 44, fontSize: 13 }}>ล้านบาท</span>
           <LiveChart w={644} h={270} x0={64} x1={613} yZero={225} yTop={70} yTickX={39} xTickY={249} tickSize={13} labelSize={13} threshold={app.threshold} compact callout={s ? "scenario" : "breach"}
             series={[{ pts: f.series, color: "#8b1a24", band: "#f9e4e6" }, ...(s ? [{ pts: s.series, color: "#f39a1e", band: "#fdebd2", bandOpacity: 0.7 }] : [])]} />
-          <div className="legend-wrap" style={{ top: 271 }}><Legend items={s ? [{ kind: "line-dot", color: "#8b1a24", label: "กรณีฐาน" }, { kind: "line-dot", color: "#f39a1e", label: "สถานการณ์" }, { kind: "thr", color: "#6b7180", label: "เกณฑ์เงินสำรองขั้นต่ำ" }] : LEGEND_MAIN} gap={34} /></div>
+          <div className="legend-wrap" style={{ top: 271 }}><Legend items={s ? [{ kind: "line-dot", color: "#8b1a24", label: "กรณีฐาน" }, { kind: "line-dot", color: "#f39a1e", label: "สถานการณ์" }, { kind: "thr", color: "#6b7180", label: "เกณฑ์เงินสำรองขั้นต่ำ" }] : LEGEND_MAIN} gap={18} /></div>
         </>)}
       </div>
 

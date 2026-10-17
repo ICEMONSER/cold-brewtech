@@ -24,7 +24,7 @@ export default function Forecast() {
   const maxV = Math.max(...bars.map((b) => Math.max(b.receipts, b.claims)), 1);
   const step = [1, 2, 2.5, 5, 10, 20, 25, 50].map((x) => x * 1e6).find((s) => s * 4 >= maxV) ?? Math.ceil(maxV / 4e7) * 1e7;
   const top = step * 4, Yb = (v: number) => 215 - (v / top) * 136;
-  const n = bars.length, slot = 512 / n, bw = Math.min(34, slot * 0.36);
+  const n = bars.length, slot = 512 / n, bw = Math.min(34, slot * 0.34);
 
   return (
     <>
@@ -84,17 +84,27 @@ export default function Forecast() {
             <line x1="48" x2="48" y1={Yb(top)} y2="215" stroke="#e3e5e9" />
             {bars.map((w, i) => {
               const cx = 48 + slot * (i + 0.5);
-              const lbl = view === "week" || (i + 1) % Math.ceil(n / 10) === 0 || i === 0;
+              const week = view === "week";
+              // x labels: full "วันที่ 1–7" when there is room, otherwise "ส.1", "ส.2"… (full text in the tooltip)
+              const short = week && slot < 90;
+              const lbl = week ? (!short || slot >= 26 || i % 2 === 0) : (i + 1) % Math.ceil(n / 10) === 0 || i === 0;
+              // value labels only when they fit; nudge the two labels apart and stack them if they still collide
+              const showVals = week && slot >= 70;
+              const gap = 4, xr = cx - gap / 2 - bw / 2, xc = cx + gap / 2 + bw / 2;
+              const tr = fmtM(w.receipts, 0), tc = fmtM(w.claims, 0);
+              const est = (t: string) => t.length * 7.8;
+              let yr = Yb(w.receipts) - 9, yc = Yb(w.claims) - 9;
+              if (xc - xr < (est(tr) + est(tc)) / 2 + 2 && Math.abs(yr - yc) < 14) { if (yr >= yc) yr = yc - 14; else yc = yr - 14; }
               return (
                 <g key={w.label}>
-                  <title>{`${view === "week" ? w.label : "วันที่ " + w.label}: รับ ${fmtM(w.receipts)} · จ่ายเคลม ${fmtM(w.claims)}`}</title>
-                  <rect x={cx - bw - 1} y={Yb(w.receipts)} width={bw} height={215 - Yb(w.receipts)} rx="2" fill="#93d3a9" />
-                  <rect x={cx + 1} y={Yb(w.claims)} width={bw} height={215 - Yb(w.claims)} rx="2" fill="#f19aa2" />
-                  {view === "week" && <>
-                    <text x={cx - bw / 2} y={Yb(w.receipts) - 9} textAnchor="middle" fontSize="11.5" fontWeight="600" fill="#1f2430">{fmtM(w.receipts, 0)}</text>
-                    <text x={cx + bw / 2} y={Yb(w.claims) - 9} textAnchor="middle" fontSize="11.5" fontWeight="600" fill="#1f2430">{fmtM(w.claims, 0)}</text>
+                  <title>{`${week ? w.label : "วันที่ " + w.label}: รับ ${fmtM(w.receipts)} · จ่ายเคลม ${fmtM(w.claims)}`}</title>
+                  <rect x={cx - gap / 2 - bw} y={Yb(w.receipts)} width={bw} height={215 - Yb(w.receipts)} rx="2" fill="#93d3a9" />
+                  <rect x={cx + gap / 2} y={Yb(w.claims)} width={bw} height={215 - Yb(w.claims)} rx="2" fill="#f19aa2" />
+                  {showVals && <>
+                    <text x={xr} y={yr} textAnchor="middle" fontSize="11.5" fontWeight="600" fill="#1f2430">{tr}</text>
+                    <text x={xc} y={yc} textAnchor="middle" fontSize="11.5" fontWeight="600" fill="#1f2430">{tc}</text>
                   </>}
-                  {lbl && <text x={cx} y="241" textAnchor="middle" fontSize={view === "week" ? 14 : 12} className="tick">{w.label}</text>}
+                  {lbl && <text x={cx} y="241" textAnchor="middle" fontSize={week ? (short ? 12.5 : 14) : 12} className="tick">{short ? `ส.${i + 1}` : w.label}</text>}
                 </g>
               );
             })}

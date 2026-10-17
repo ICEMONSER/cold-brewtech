@@ -66,6 +66,29 @@ export default function LiveChart(pr: Props) {
   const tx = X(trough.day), ty = Y(trough.cash);
   const cx = Math.min(Math.max(tx - cw / 2, pr.x0), pr.x1 - cw), cy = ty - ch - 22;
 
+  // --- label placement without collisions (callout, start/end values, threshold label) ---
+  type Box = { l: number; t: number; r: number; b: number };
+  const hit = (p: Box, q: Box) => p.l < q.r && q.l < p.r && p.t < q.b && q.t < p.b;
+  const tw = (t: string, size = ls) => t.length * size * 0.56;
+  const calloutBox: Box | null = pr.callout !== "none" && pr.callout !== "scenario" ? { l: cx - 4, t: cy - 4, r: cx + cw + 4, b: ty } : null;
+  const startTxt = fmtM(main[0].cash);
+  let startY = Y(main[0].cash) - 24;
+  const startBox = (y: number): Box => ({ l: X(1) + 4, t: y - ls, r: X(1) + 4 + tw(startTxt), b: y + 3 });
+  if (calloutBox && hit(startBox(startY), calloutBox)) startY = Y(main[0].cash) + 26;
+  const endTxt = fmtM(last.cash);
+  const endBox: Box = { l: Math.min(X(H) + 20, pr.w - 2) - tw(endTxt), t: Y(last.cash) - 18 - ls, r: Math.min(X(H) + 20, pr.w - 2), b: Y(last.cash) - 15 };
+  const thrTxt = pr.thresholdLabel ?? `เกณฑ์เงินสำรองขั้นต่ำ ${fmtM(pr.threshold)}`;
+  const thrW = tw(thrTxt);
+  const thrCands = [
+    { x: X(dMin) + 2, y: Y(pr.threshold) - 8, anchor: "start" as const },
+    { x: X(H) - 4, y: Y(pr.threshold) - 8, anchor: "end" as const },
+    { x: X(dMin) + 2, y: Y(pr.threshold) + ls + 6, anchor: "start" as const },
+    { x: X(H) - 4, y: Y(pr.threshold) + ls + 6, anchor: "end" as const },
+  ];
+  const thrBox = (c: typeof thrCands[number]): Box => ({ l: c.anchor === "start" ? c.x : c.x - thrW, t: c.y - ls, r: c.anchor === "start" ? c.x + thrW : c.x, b: c.y + 3 });
+  const blockers = [calloutBox, startBox(startY), endBox].filter(Boolean) as Box[];
+  const thr = thrCands.find((c) => !blockers.some((bx) => hit(thrBox(c), bx))) ?? thrCands[0];
+
   return (
     <svg className="chart" viewBox={`0 0 ${pr.w} ${pr.h}`} width={pr.w} height={pr.h} role="img" aria-label="กราฟคาดการณ์เงินสด" onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
       {ticks.map((t) => (
@@ -90,7 +113,7 @@ export default function LiveChart(pr: Props) {
       })}
       {pr.series.map((s, i) => <path key={"b" + i} d={band(s)} fill={s.band} opacity={s.bandOpacity ?? 1} />)}
       <line x1={left} x2={right} y1={Y(pr.threshold)} y2={Y(pr.threshold)} stroke="#6b7180" strokeWidth="1.1" strokeDasharray="5 4" />
-      <text x={X(dMin) + 2} y={Y(pr.threshold) - 8} fontSize={ls} fill="#2b2f38">{pr.thresholdLabel ?? `เกณฑ์เงินสำรองขั้นต่ำ ${fmtM(pr.threshold)}`}</text>
+      <text x={thr.x} y={thr.y} textAnchor={thr.anchor} fontSize={ls} fill="#2b2f38" paintOrder="stroke" stroke="#fff" strokeWidth={3}>{thrTxt}</text>
       {pr.history && <path d={path(pr.history.map((p) => [X(p.day), Y(p.cash)]))} fill="none" stroke={s0.color} strokeWidth="2.3" />}
       {pr.series.map((s, i) => {
         const px = s.pts.map((p) => [X(p.day), Y(p.cash)] as [number, number]);
@@ -113,10 +136,10 @@ export default function LiveChart(pr: Props) {
           </g>
         );
       })}
-      <text x={X(1) + 4} y={Y(main[0].cash) - 24} fontSize={ls} fontWeight={700} fill="#16181d">{fmtM(main[0].cash)}</text>
+      <text x={X(1) + 4} y={startY} fontSize={ls} fontWeight={700} fill="#16181d" paintOrder="stroke" stroke="#fff" strokeWidth={3}>{startTxt}</text>
       <text x={Math.min(X(H) + 20, pr.w - 2)} y={Y(last.cash) - 18} fontSize={ls} fontWeight={700} fill="#16181d" textAnchor="end">{fmtM(last.cash)}</text>
       {pr.series[1] && (() => { const l2 = pr.series[1].pts[H - 1]; return <text x={Math.min(X(H) + 26, pr.w - 2)} y={Y(l2.cash) + 22} fontSize={ls} fontWeight={700} fill="#e8890c" textAnchor="end">{fmtM(l2.cash)}</text>; })()}
-      {pr.callout !== "scenario" && <text x={tx} y={ty + 28} fontSize={ls} fontWeight={700} fill="#16181d" textAnchor="middle">{fmtM(trough.cash)}</text>}
+      {pr.callout !== "scenario" && (ty + 28 > pr.yZero - 2 ? <text x={tx + 10} y={ty + 5} fontSize={ls} fontWeight={700} fill="#16181d" paintOrder="stroke" stroke="#fff" strokeWidth={3}>{fmtM(trough.cash)}</text> : <text x={tx} y={ty + 28} fontSize={ls} fontWeight={700} fill="#16181d" textAnchor="middle" paintOrder="stroke" stroke="#fff" strokeWidth={3}>{fmtM(trough.cash)}</text>)}
       {pr.callout !== "none" && pr.callout !== "scenario" && (
         <g>
           <path d={`M${cx + 3},${cy} h${cw - 6} q3,0 3,3 v${ch - 6} q0,3 -3,3 H${tx + 7} L${tx},${ty - 9} L${tx - 7},${cy + ch} H${cx + 3} q-3,0 -3,-3 v${-(ch - 6)} q0,-3 3,-3 Z`} fill={breach ? "#8b1a24" : "#2b2f38"} />

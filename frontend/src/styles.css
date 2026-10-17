@@ -430,7 +430,7 @@ svg text { font-family: "Inter", "Noto Sans Thai", sans-serif; }
 .st-card { padding: 17px 22px 0 22px; font-family: "Noto Sans Thai"; }
 .st-card .card-title { font-size: 20.5px; }
 .st-card .sub { font-size: 15px; margin-top: 3px; }
-.st-card:first-child { height: 214px; }
+.st-left > .st-card:first-child { height: 214px; }
 .st-fields { display: grid; grid-template-columns: 386px 362px; gap: 27px; margin-top: 18px; }
 .st-fields .field-label { font-size: 15.5px; margin-bottom: 8px; }
 .st-fields .input input { font-size: 17px; }
@@ -665,3 +665,7 @@ button.pill.check:hover { background: #fbd6d3; }
 .fund-dock-s { font-size: 11.5px; color: #e6c2c6; line-height: 16px; }
 .brand-name { font-family: "Noto Sans Thai", sans-serif; font-weight: 700; font-size: 21px; letter-spacing: -.2px; line-height: 1.1; margin-top: 0; }
 .brand-sub { margin-top: 5px; }
+
+/* report preview chart scales to the card width */
+.rp-chart .chart { width: 100%; height: auto; }
+.rp-chart .legend { flex-wrap: wrap; row-gap: 4px; padding: 0 10px; }

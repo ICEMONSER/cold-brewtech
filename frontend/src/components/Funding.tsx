@@ -30,7 +30,21 @@ export function FundingWatcher() {
     let seen = false; try { seen = sessionStorage.getItem("cbt.fundingSeen") === "1"; } catch { /* ignore */ }
     if (n.show && !seen) app.setFunding(true);
   }, [n.show]); // eslint-disable-line react-hooks/exhaustive-deps
-  return app.funding ? <FundingModal onClose={() => { app.setFunding(false); try { sessionStorage.setItem("cbt.fundingSeen", "1"); } catch { /* ignore */ } }} /> : null;
+  const close = () => { app.setFunding(false); try { sessionStorage.setItem("cbt.fundingSeen", "1"); } catch { /* ignore */ } };
+  return (
+    <>
+      {app.funding && <FundingModal onClose={close} />}
+      {/* "ไว้ภายหลัง" docks the request as a tab with a red dot; click to reopen and confirm any time */}
+      {n.show && !app.funding && (
+        <button className="fund-dock" onClick={() => app.setFunding(true)} aria-label="เปิดหน้าจัดหาเงินทุนเพื่อยืนยันกู้">
+          <span className="fund-dot" aria-hidden="true" />
+          <span className="fund-dock-t">รอยืนยันกู้เงิน</span>
+          <span className="fund-dock-v">{fmtM(n.need)}</span>
+          <span className="fund-dock-s">ขาดทุนรับประกัน {fmtM(n.uw.result)} · กดเพื่อเลือกแหล่งกู้</span>
+        </button>
+      )}
+    </>
+  );
 }
 
 function FundingModal({ onClose }: { onClose: () => void }) {

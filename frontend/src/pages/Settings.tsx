@@ -176,7 +176,7 @@ function useSourceTools() {
       )}
       {check && (
         <Modal title={`ตรวจสอบ ${spec(check.key).system}`} onClose={() => setCheck(null)} footer={<button className="btn mbtn" onClick={() => setCheck(null)}>ปิด</button>}>
-          <p>จำนวนแถว: <b>{(app.ds[check.key] as any[]).length.toLocaleString()}</b> · แหล่ง: {app.meta[check.key].origin === "upload" ? `อัปโหลด (${app.meta[check.key].fileName})` : "ข้อมูลตัวอย่าง"} · อัปเดต {thaiDateTime(app.meta[check.key].updatedAt)}</p>
+          <p>จำนวนแถว: <b>{(app.ds[check.key] as any[]).length.toLocaleString()}</b> · แหล่ง: {app.meta[check.key].origin === "upload" ? `อัปโหลด (${app.meta[check.key].fileName})` : "ข้อมูล BKI ปี 2567"} · อัปเดต {thaiDateTime(app.meta[check.key].updatedAt)}</p>
           {check.issues.length ? <ul className="errs">{check.issues.map((i) => <li key={i}>{i}</li>)}</ul> : <p className="green">✓ เชื่อมโยงกับแหล่งข้อมูลอื่นครบถ้วน ไม่พบปัญหา</p>}
         </Modal>
       )}
@@ -200,7 +200,7 @@ function ConnTable() {
             return (
               <tr key={s.key}>
                 <td><span className="st-src" title={s.system}>{SRC_ICON[s.key]}{s.th}</span></td>
-                <td className="th"><span className={"st-dot" + (m.origin === "upload" ? "" : " sample")} />{m.origin === "upload" ? "ข้อมูลบริษัท" : "ข้อมูลตัวอย่าง"}</td>
+                <td className="th"><span className={"st-dot" + (m.origin === "upload" ? "" : " sample")} />{m.origin === "upload" ? "ข้อมูลบริษัท" : "ข้อมูล BKI ปี 2567"}</td>
                 <td className="th">{m.rows.toLocaleString()} แถว</td>
                 <td>{hhmm(m.updatedAt)}</td>
                 <td><button className="pill check" onClick={() => t.runCheck(s.key)}>ตรวจสอบ</button></td>
@@ -208,7 +208,7 @@ function ConnTable() {
                   { label: "อัปโหลดไฟล์ CSV", onClick: () => t.pick(s.key) },
                   { label: "ดาวน์โหลดข้อมูลปัจจุบัน", onClick: () => t.current(s.key) },
                   { label: "ดาวน์โหลดเทมเพลต", onClick: () => t.template(s.key) },
-                  ...(m.origin === "upload" ? [{ label: "กลับไปใช้ข้อมูลตัวอย่าง", danger: true, onClick: () => { app.resetSource(s.key); app.toast("กลับไปใช้ข้อมูลตัวอย่างแล้ว"); } }] : []),
+                  ...(m.origin === "upload" ? [{ label: "กลับไปใช้ข้อมูล BKI ปี 2567", danger: true, onClick: () => { app.resetSource(s.key); app.toast("กลับไปใช้ข้อมูล BKI ปี 2567 แล้ว"); } }] : []),
                 ]} /></td>
               </tr>
             );
@@ -248,7 +248,7 @@ function Sources() {
   const t = useSourceTools();
   return (
     <div className="src-page">
-      <p className="sub" style={{ margin: "18px 0 14px" }}>เชื่อมข้อมูลจาก 5 ระบบที่แยกกันอยู่ เข้ามาไว้ในที่เดียว (Connect) ข้อมูลประมวลผลในเบราว์เซอร์ของคุณเท่านั้น ไม่ถูกส่งไปยังเซิร์ฟเวอร์ใด ๆ อัปโหลดไฟล์ CSV ตามเทมเพลตเพื่อแทนที่ข้อมูลตัวอย่าง</p>
+      <p className="sub" style={{ margin: "18px 0 14px" }}>เชื่อมข้อมูลจาก 5 ระบบที่แยกกันอยู่ เข้ามาไว้ในที่เดียว (Connect) ข้อมูลประมวลผลในเบราว์เซอร์ของคุณเท่านั้น ไม่ถูกส่งไปยังเซิร์ฟเวอร์ใด ๆ อัปโหลดไฟล์ CSV ตามเทมเพลตเพื่อแทนที่ข้อมูล BKI ปี 2567</p>
       <div className="flow">
         {SOURCES.map((s, i) => {
           const m = app.meta[s.key];
@@ -258,14 +258,14 @@ function Sources() {
               <div className="flow-sys">{s.system}</div>
               <div className="flow-body">
                 <p>{s.desc}</p>
-                <div className={"flow-st " + m.origin}>{m.origin === "upload" ? `✓ ${m.fileName}` : "ใช้ข้อมูลตัวอย่าง"}</div>
+                <div className={"flow-st " + m.origin}>{m.origin === "upload" ? `✓ ${m.fileName}` : "ใช้ข้อมูล BKI ปี 2567"}</div>
                 <small>{m.rows.toLocaleString()} แถว · อัปเดต {thaiDateTime(m.updatedAt)}</small>
                 <button className="btn mbtn" onClick={() => t.pick(s.key)}><I.Download size={16} />อัปโหลด CSV</button>
                 <div className="flow-links">
                   <button className="link" onClick={() => t.template(s.key)}>เทมเพลต</button>
                   <button className="link" onClick={() => t.current(s.key)}>ดาวน์โหลดข้อมูล</button>
                   <button className="link" onClick={() => t.runCheck(s.key)}>ตรวจสอบ</button>
-                  {m.origin === "upload" && <button className="link red" onClick={() => { app.resetSource(s.key); app.toast("กลับไปใช้ข้อมูลตัวอย่างแล้ว"); }}>ใช้ข้อมูลตัวอย่าง</button>}
+                  {m.origin === "upload" && <button className="link red" onClick={() => { app.resetSource(s.key); app.toast("กลับไปใช้ข้อมูล BKI ปี 2567 แล้ว"); }}>ใช้ข้อมูล BKI ปี 2567</button>}
                 </div>
               </div>
             </div>
@@ -312,7 +312,7 @@ function Company() {
         <h3 className="card-title" style={{ marginTop: 30 }}>ข้อมูลในเบราว์เซอร์</h3>
         <div className="sub">การตั้งค่า ไฟล์ที่อัปโหลด รายงาน และแชท ถูกเก็บในเบราว์เซอร์นี้เท่านั้น</div>
         <button className="btn btn-outline mbtn" style={{ marginTop: 14 }} onClick={() => setConfirm(true)}>ล้างข้อมูลทั้งหมดและเริ่มใหม่</button>
-        {confirm && <Modal title="ล้างข้อมูลทั้งหมด?" onClose={() => setConfirm(false)} footer={<><button className="btn btn-ghost mbtn" onClick={() => setConfirm(false)}>ยกเลิก</button><button className="btn mbtn" onClick={() => { try { Object.keys(localStorage).filter((k) => k.startsWith("cbt.")).forEach((k) => localStorage.removeItem(k)); } catch { /* ignore */ } location.reload(); }}>ล้างข้อมูล</button></>}><p>ไฟล์ที่อัปโหลด การตั้งค่า รายงานที่สร้าง ประวัติ และแชท จะถูกลบ แล้วกลับไปใช้ข้อมูลตัวอย่าง</p></Modal>}
+        {confirm && <Modal title="ล้างข้อมูลทั้งหมด?" onClose={() => setConfirm(false)} footer={<><button className="btn btn-ghost mbtn" onClick={() => setConfirm(false)}>ยกเลิก</button><button className="btn mbtn" onClick={() => { try { Object.keys(localStorage).filter((k) => k.startsWith("cbt.")).forEach((k) => localStorage.removeItem(k)); } catch { /* ignore */ } location.reload(); }}>ล้างข้อมูล</button></>}><p>ไฟล์ที่อัปโหลด การตั้งค่า รายงานที่สร้าง ประวัติ และแชท จะถูกลบ แล้วกลับไปใช้ข้อมูล BKI ปี 2567</p></Modal>}
       </section>
       <FundingSettings />
       <section className="card st-card" style={{ paddingBottom: 20 }}>

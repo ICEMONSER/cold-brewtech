@@ -1,4 +1,4 @@
-/* Sample data (ข้อมูลสมมติ) shown on every screen, read off the reference designs. */
+/* Sample data shown on every screen, read off the reference designs. */
 import type { Pt } from "./components/CashChart";
 
 export const BASE: Pt[] = [

@@ -43,25 +43,6 @@ export function Sidebar() {
   );
 }
 
-export function SampleChip({ small }: { small?: boolean }) {
-  const { meta } = useApp();
-  const ups = Object.values(meta).filter((m) => m.origin === "upload").length;
-  const label = ups === 0 ? "ข้อมูลจำลอง" : ups === 5 ? "ข้อมูลบริษัท" : "ข้อมูลผสม";
-  return (
-    <Popover w={330} trigger={<span className={"chip" + (small ? " sm" : "") + (ups === 5 ? " real" : "")}>{label} <I.Info size={small ? 13 : 17} /></span>}>
-      <div className="pop-b">
-        <b>แหล่งข้อมูลที่ใช้คำนวณ</b>
-        {SOURCES.map((s) => (
-          <div key={s.key} className="pop-row"><span>{s.system}</span><span className={meta[s.key].origin === "upload" ? "ok" : "muted"}>{meta[s.key].origin === "upload" ? `อัปโหลด (${meta[s.key].rows.toLocaleString()} แถว)` : "ข้อมูลตัวอย่าง"}</span></div>
-        ))}
-        {ups < 5 && <p>ข้อมูลตัวอย่างจำลองจากงบปี 2567 ของบมจ. กรุงเทพประกันภัย (BKI): เบี้ยรับรวม ฿31,736M/ปี, Combined ratio 90.1%, กำไรสุทธิจากการรับประกันภัย ฿1,871M/ปี, เงินสด ฿789.5M (31 ธ.ค. 67), เคลม 258,027 ราย/ปี รายการเคลมแต่ละรายการเป็นข้อมูลจำลองที่ปรับยอดรวมให้ตรงกับตัวเลขเหล่านี้ ÷ 12</p>}
-        <p>ตัวเลขทุกตัวคำนวณจากข้อมูลเหล่านี้ในเบราว์เซอร์ของคุณ ข้อมูลไม่ถูกส่งออกไปภายนอก</p>
-        <Link to="/settings?tab=sources" className="link">นำเข้าข้อมูลบริษัท <I.ArrowRight size={14} /></Link>
-      </div>
-    </Popover>
-  );
-}
-
 export function PageHeader({ title, selects, gap = 105 }: { title: string; selects?: [number, number]; gap?: number }) {
   const [w1, w2] = selects ?? [208, 220];
   const { settings, horizon, setHorizon, loadedAt, refresh, toast } = useApp();

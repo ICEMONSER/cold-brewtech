@@ -8,7 +8,7 @@ Concept: ExpresSO NB Co., Ltd. (Isaree Wongariyaporn, Ramida Khampao).
 
 The website is a complete working app. It is not a mock-up: every number is calculated from data, and every button works. There is no server. All calculation runs in the visitor's browser, and data never leaves the browser.
 
-- **Data:** the app ships with simulated data (ข้อมูลจำลอง) calibrated to the published FY2024 (ปี 2567) figures of Bangkok Insurance PCL (BKI). See "Sample data basis" below. You can replace each of the five sources with your own CSV.
+- **Data:** the app ships with simulated data calibrated to the published FY2024 (ปี 2567) figures of Bangkok Insurance PCL (BKI). See "Sample data basis" below. You can replace each of the five sources with your own CSV.
 - **Hosting:** the site is static, so GitHub Pages is enough to run it.
 
 ## How the concept maps to the app

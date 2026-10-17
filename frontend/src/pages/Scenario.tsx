@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useMemo, useState } from "react";
+import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Legend } from "../components/CashChart";
 import LiveChart from "../components/LiveChart";
@@ -64,11 +64,14 @@ export default function Scenario() {
   const extra = sc.totals.claims - base.totals.claims;
   const label = `${pct(applied.shock)}${applied.delay ? `, รับช้า ${applied.delay} วัน` : ""}`;
 
+  const askFund = useRef(false);
   // a shortfall in the simulated scenario opens the funding popup (O/D first, else cheapest bank)
   useEffect(() => {
     const ctx = scenarioFundCtx(sc, thr, `เคลม ${label}${actions.length ? ` + ${actions.length} มาตรการ` : ""}`, (extra) =>
       forecast({ ...sds, ledger: [...sds.ledger, ...extra] }, { horizon, today, threshold: thr, claimShock: applied.shock, receiptDelay: applied.delay }));
     app.setScenarioFund(ctx);
+    // every press of "คำนวณสถานการณ์" re-opens the popup while a shortfall remains (even after an earlier loan or "ไว้ภายหลัง")
+    if (askFund.current) { askFund.current = false; if (ctx) app.setFunding(true); }
   }, [sc, thr, label, actions.length, sds, horizon, today, applied]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => app.setScenarioFund(null), []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -119,7 +122,7 @@ export default function Scenario() {
             <div className="hint" style={{ marginTop: 9 }}>ช่วงแนะนำ 400 – 700 ล้านบาท</div>
           </div>
 
-          <button className={"btn sc-btn" + (dirty ? " pulse" : "")} onClick={() => { setApplied({ shock, delay, reserve }); app.toast("คำนวณสถานการณ์ใหม่แล้ว"); }}><I.Calculator size={22} />คำนวณสถานการณ์</button>
+          <button className={"btn sc-btn" + (dirty ? " pulse" : "")} onClick={() => { askFund.current = true; setApplied({ shock, delay, reserve }); app.toast("คำนวณสถานการณ์ใหม่แล้ว"); }}><I.Calculator size={22} />คำนวณสถานการณ์</button>
           <button className="btn btn-ghost sc-btn2" onClick={() => { setShock(10); setDelay(0); setReserve(app.settings.reserveM); setApplied({ shock: 10, delay: 0, reserve: app.settings.reserveM }); setActions([]); }}><I.Reset size={20} />รีเซ็ต</button>
           {actions.length > 0 && (
             <div className="sc-acts">

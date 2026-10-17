@@ -1,4 +1,4 @@
-/* Sample data (ข้อมูลจำลอง) calibrated to Bangkok Insurance PCL (BKI) FY2024 public figures.
+/* Sample data calibrated to Bangkok Insurance PCL (BKI) FY2024 public figures.
  * Records are synthetic; their monthly totals match BKI's annual figures ÷ 12. The internal
  * splits that are not published are assumptions (marked ASSUMED). Sources: BKI 56-1 One Report
  * 2024, S&P Global Ratings report (27 Nov 2025), BKIH balance sheet FY2024. Dates are relative to

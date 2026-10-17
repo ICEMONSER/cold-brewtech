@@ -148,7 +148,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     resetSource: (k) => {
       const nu = { ...uploads }; delete nu[k]; const nm = { ...uploadMeta }; delete nm[k];
       setUploads(nu); setUploadMeta(nm); save("cbt.uploads", nu); save("cbt.uploadMeta", nm);
-      log(`กลับไปใช้ข้อมูลตัวอย่างสำหรับ ${k}`);
+      log(`กลับไปใช้ข้อมูล BKI ปี 2567สำหรับ ${k}`);
     },
     refresh: () => { setToday(todayISO()); setLoadedAt(Date.now()); },
     reports: [...created, ...DEFAULT_REPORTS],

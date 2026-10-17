@@ -94,11 +94,18 @@ export function AlertBanner({ children, action = true, className = "" }: { child
 
 /** Banner driven by the live forecast and the alert rules in Settings. */
 export function LiveAlert({ className = "" }: { className?: string }) {
-  const { fc, settings, meta } = useApp();
+  const { fc, settings, meta, setFunding } = useApp();
   const stale = settings.rules.stale && Object.values(meta).some((m) => m.origin === "upload" && Date.now() - m.updatedAt > 24 * 3600e3);
   if (!settings.channels.inApp) return null;
   if (settings.rules.below && fc.breach && !fc.breach.earlyWarning)
-    return <AlertBanner className={className}>วันที่ {fc.breach.day} เงินสดอาจต่ำกว่าเกณฑ์ <em>{fmtM(fc.breach.shortfall)}</em></AlertBanner>;
+    return (
+      <div className={"alert " + className} role="status">
+        <span className="bang">!</span>
+        <strong>วันที่ {fc.breach.day} เงินสดอาจต่ำกว่าเกณฑ์ <em>{fmtM(fc.breach.shortfall)}</em></strong>
+        {!className.includes("alert-in") && <button className="btn btn-sm btn-outline fund-btn" onClick={() => setFunding(true)}>จัดหาเงินทุน</button>}
+        <NavLink to="/forecast" className="btn btn-sm">ดูรายละเอียด <I.ArrowRight size={16} /></NavLink>
+      </div>
+    );
   if (settings.rules.below && fc.breach?.earlyWarning)
     return <AlertBanner className={className}>เฝ้าระวัง: วันที่ {fc.breach.day} เงินสดอาจแตะเกณฑ์ (ช่วงความไม่แน่นอน)</AlertBanner>;
   if (stale) return <AlertBanner className={className}>ข้อมูลบางแหล่งไม่ได้อัปเดตเกิน 24 ชั่วโมง</AlertBanner>;

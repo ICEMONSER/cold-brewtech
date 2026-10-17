@@ -16,6 +16,7 @@ import "./styles.css";
 import { useEffect } from "react";
 import { Sidebar } from "./components/Shell";
 import { Toasts } from "./components/ui";
+import { FundingWatcher } from "./components/Funding";
 import { AppProvider, useApp } from "./store";
 import Overview from "./pages/Overview";
 import Forecast from "./pages/Forecast";
@@ -51,6 +52,7 @@ function App() {
     <AppProvider>
     <ScheduleWatcher />
     <Toasts />
+    <FundingWatcher />
     <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, "")}>
       <div className="app">
         <Sidebar />

@@ -21,6 +21,17 @@ The website is a complete working app. It is not a mock-up: every number is calc
 | **Reason** | Daily cash forecast for 30/60/90 days with a 90% band. Explains what drives the low point. Scenario "what if claims +X% / receipts late N days". Comparison with the last 30 days and the same period last year. | พยากรณ์เงินสด, จำลองสถานการณ์ |
 | **Act** | Alerts when cash is forecast below the minimum reserve. Mitigation actions you can try inside a scenario: credit line, selling investments, deferring payments, collecting premiums faster. Excel/PDF/CSV reports, scheduled reports and an email hand-off. | Every page, รายงาน, ตั้งค่า |
 
+## Funding when underwriting makes a loss
+
+When the underwriting result for the last 30 days is negative, a funding window opens automatically, once per session. You can also open it from the "จัดหาเงินทุน" button on the alert.
+
+1. **Amount needed:** the liquidity gap below the minimum reserve, rounded up to ฿1M. If there is no gap, the amount is the underwriting loss.
+2. **If the overdraft (O/D) has enough room left:** the AI recommends drawing on the O/D the day before cash falls below the threshold.
+3. **If it doesn't:** the AI compares short-term loan offers by total cost = amount × rate × days/365 + fee. It checks each bank's maximum facility and ranks the options with the cheapest first. You pick one and confirm.
+4. **After you confirm:** the loan is added to the forecast: drawdown on the borrowing day, repayment of principal plus interest at the end of the term. It is also listed under ตั้งค่า → บริษัท, where it can be cancelled.
+
+The O/D limit, amount used, interest rates and bank offers can all be edited under ตั้งค่า → บริษัท. The default rates are sample values; replace them with the offers you actually receive.
+
 ## The forecast
 
 - **Day 1:** today's bank balance, the latest `balance` row in the ledger.

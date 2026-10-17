@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { PageHeader } from "../components/Shell";
 import { Dropdown, Menu, Modal } from "../components/ui";
@@ -314,6 +314,7 @@ function Company() {
         <button className="btn btn-outline mbtn" style={{ marginTop: 14 }} onClick={() => setConfirm(true)}>ล้างข้อมูลทั้งหมดและเริ่มใหม่</button>
         {confirm && <Modal title="ล้างข้อมูลทั้งหมด?" onClose={() => setConfirm(false)} footer={<><button className="btn btn-ghost mbtn" onClick={() => setConfirm(false)}>ยกเลิก</button><button className="btn mbtn" onClick={() => { try { Object.keys(localStorage).filter((k) => k.startsWith("cbt.")).forEach((k) => localStorage.removeItem(k)); } catch { /* ignore */ } location.reload(); }}>ล้างข้อมูล</button></>}><p>ไฟล์ที่อัปโหลด การตั้งค่า รายงานที่สร้าง ประวัติ และแชท จะถูกลบ แล้วกลับไปใช้ข้อมูลตัวอย่าง</p></Modal>}
       </section>
+      <FundingSettings />
       <section className="card st-card" style={{ paddingBottom: 20 }}>
         <h3 className="card-title">AI Concierge</h3>
         <div className="sub">ค่าเริ่มต้น AI Concierge วิเคราะห์และตอบจากข้อมูลด้วยระบบในเครื่อง (ไม่ต้องใช้คีย์) เปิดใช้ Claude เพื่อให้เรียบเรียงคำตอบภาษาธรรมชาติจากตัวเลขเดียวกัน</div>
@@ -369,3 +370,50 @@ function Users() {
 }
 
 export { fmtM };
+
+/* ---------------- วงเงิน O/D + อัตราดอกเบี้ยธนาคาร ---------------- */
+function FundingSettings() {
+  const app = useApp();
+  const [od, setOd] = useState(app.settings.od);
+  useEffect(() => setOd(app.settings.od), [app.settings.od]);
+  const [banks, setBanks] = useState(app.settings.banks);
+  const setB = (i: number, k: string, v: string) => setBanks(banks.map((b, j) => (j === i ? { ...b, [k]: k === "bank" || k === "product" ? v : +v || 0 } : b)));
+  return (
+    <section className="card st-card" style={{ paddingBottom: 20, gridColumn: "1 / -1" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div><h3 className="card-title">แหล่งเงินทุนระยะสั้น</h3><div className="sub">ใช้เมื่อขาดทุนจากการรับประกัน: ระบบเสนอ O/D ก่อนถ้าวงเงินพอ ถ้าไม่พอ AI เปรียบเทียบดอกเบี้ยธนาคารให้เลือกกู้</div></div>
+        <button className="btn mbtn" onClick={() => app.setFunding(true)}>เปิดหน้าจัดหาเงินทุน</button>
+      </div>
+      <div className="mgrid" style={{ gridTemplateColumns: "repeat(3, 1fr)", marginTop: 8 }}>
+        <label className="mfield"><span>วงเงินเบิกเกินบัญชี (ล้านบาท)</span><input type="number" min={0} value={od.limitM} onChange={(e) => setOd({ ...od, limitM: +e.target.value || 0 })} /></label>
+        <label className="mfield"><span>ใช้ไปแล้ว (ล้านบาท)</span><input type="number" min={0} value={od.usedM} onChange={(e) => setOd({ ...od, usedM: +e.target.value || 0 })} /></label>
+        <label className="mfield"><span>ดอกเบี้ย O/D (% ต่อปี)</span><input type="number" step="0.05" value={od.rate} onChange={(e) => setOd({ ...od, rate: +e.target.value || 0 })} /></label>
+      </div>
+      <table className="tbl mtbl"><thead><tr><th>ธนาคาร</th><th>ผลิตภัณฑ์</th><th>ดอกเบี้ย %/ปี</th><th>ค่าธรรมเนียม %</th><th>วงเงินสูงสุด (ล้านบาท)</th><th /></tr></thead>
+        <tbody>{banks.map((b, i) => (
+          <tr key={i}>
+            <td><input className="isel" value={b.bank} onChange={(e) => setB(i, "bank", e.target.value)} /></td>
+            <td><input className="isel" style={{ width: 230 }} value={b.product} onChange={(e) => setB(i, "product", e.target.value)} /></td>
+            <td><input className="isel" style={{ width: 80 }} type="number" step="0.05" value={b.rate} onChange={(e) => setB(i, "rate", e.target.value)} /></td>
+            <td><input className="isel" style={{ width: 80 }} type="number" step="0.05" value={b.fee} onChange={(e) => setB(i, "fee", e.target.value)} /></td>
+            <td><input className="isel" style={{ width: 90 }} type="number" value={b.maxM} onChange={(e) => setB(i, "maxM", e.target.value)} /></td>
+            <td><button className="link red" onClick={() => setBanks(banks.filter((_, j) => j !== i))}>ลบ</button></td>
+          </tr>
+        ))}</tbody>
+      </table>
+      <div style={{ display: "flex", gap: 12, marginTop: 10 }}>
+        <button className="btn btn-outline mbtn" onClick={() => setBanks([...banks, { bank: "ธนาคารใหม่", product: "เงินกู้ระยะสั้น", rate: 6.5, fee: 0, maxM: 50 }])}>เพิ่มธนาคาร</button>
+        <button className="btn mbtn" onClick={() => { app.saveSettings({ od, banks }, `แก้ไขแหล่งเงินทุน: O/D ${od.limitM} ล้าน (ใช้ ${od.usedM}) และอัตราดอกเบี้ย ${banks.length} ธนาคาร`); app.toast("บันทึกแหล่งเงินทุนแล้ว"); }}>บันทึก</button>
+      </div>
+      {app.loans.length > 0 && <>
+        <h4 className="mh">เงินกู้ที่บันทึกไว้ (รวมในพยากรณ์เงินสดแล้ว)</h4>
+        <table className="tbl mtbl"><thead><tr><th>แหล่ง</th><th>จำนวน</th><th>ดอกเบี้ย</th><th>เบิก</th><th>ชำระคืน</th><th /></tr></thead>
+          <tbody>{app.loans.map((l) => (
+            <tr key={l.id}><td className="th">{l.source}</td><td>{fmtM(l.amount)}</td><td>{l.rate}% · {fmtM(l.interest, 2)}</td><td>{thaiDate(l.drawDate)}</td><td>{thaiDate(addDays(l.drawDate, l.termDays))}</td>
+              <td><button className="link red" onClick={() => { app.cancelLoan(l.id); if (l.source.includes("O/D")) app.saveSettings({ od: { ...app.settings.od, usedM: Math.max(0, app.settings.od.usedM - l.amount / 1e6) } }); app.log(`ยกเลิกเงินกู้ ${l.source} ${fmtM(l.amount)}`); app.toast("ยกเลิกเงินกู้แล้ว"); }}>ยกเลิก</button></td></tr>
+          ))}</tbody>
+        </table>
+      </>}
+    </section>
+  );
+}

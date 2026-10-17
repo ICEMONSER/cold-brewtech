@@ -27,7 +27,7 @@ export function Sidebar() {
           <path d="M3 34c3-8 9-17 22-26" stroke="#430e17" strokeWidth="1.6" fill="none" strokeLinecap="round" />
         </svg>
         <div>
-          <div className="brand-name">Cold BrewTech</div>
+          <div className="brand-name">บัญชีจัง วิศวะคุง</div>
           <div className="brand-sub">AI Insurance Cash Flow Concierge</div>
         </div>
       </div>

@@ -196,7 +196,7 @@ function ScheduleTab() {
     const f = app.fc;
     if (app.settings.channels.email) {
       const body = `${t}\n${app.settings.company}\n\nเงินสดวันนี้ ${fmtM(f.opening)}\nเงินรับคาดการณ์ ${fmtM(f.totals.receipts)}\nเงินจ่ายเคลม ${fmtM(f.totals.claims)}\nเงินสดต่ำสุด ${fmtM(f.trough.cash)} (วันที่ ${f.trough.day})\nเงินสดปลายงวด ${fmtM(f.closing)}\n\n(ไฟล์ Excel ถูกดาวน์โหลดไว้ในเครื่อง แนบไฟล์ก่อนส่ง)`;
-      window.location.href = `mailto:${encodeURIComponent(app.settings.email)}?subject=${encodeURIComponent(`[Cold BrewTech] ${t}`)}&body=${encodeURIComponent(body)}`;
+      window.location.href = `mailto:${encodeURIComponent(app.settings.email)}?subject=${encodeURIComponent(`[บัญชีจัง วิศวะคุง] ${t}`)}&body=${encodeURIComponent(body)}`;
     }
     app.addSend({ t: Date.now(), report: t, to: s.recipients, channel: app.settings.channels.email ? "อีเมล + ในระบบ" : "ในระบบ", status: "ส่งแล้ว" });
     app.toast("สร้างและส่งรายงานแล้ว");

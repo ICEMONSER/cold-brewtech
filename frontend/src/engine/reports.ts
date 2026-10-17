@@ -88,7 +88,7 @@ export function reportHtml(title: string, c: RCtx, d: ReturnType<typeof reportDa
   const tbl = (sh: Sheet, max = 40) => `<table><thead><tr>${sh.rows[0].map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${sh.rows.slice(1, max + 1).map((r) => `<tr>${r.map((v) => `<td class="${typeof v === "number" ? "n" : ""}">${typeof v === "number" ? v.toLocaleString("en-US") : v}</td>`).join("")}</tr>`).join("")}</tbody></table>${sh.rows.length - 1 > max ? `<div class="meta">แสดง ${max} จาก ${sh.rows.length - 1} แถว — ดูทั้งหมดในไฟล์ Excel</div>` : ""}`;
   const kp = d.summary.length ? `<div class="kp">${d.summary.map(([k, v]) => `<div><small>${k}</small><b>${v}</b></div>`).join("")}</div>` : "";
   const sheets = d.sheets.filter((s) => s.name !== "สรุป" || !d.summary.length);
-  return `<h1>${title}</h1><div class="meta">${c.company} · ข้อมูล ณ ${thaiDate(c.today)} · สร้างโดย Cold BrewTech AI Concierge</div>${kp}${chartSvg}${sheets.map((s) => `<h2>${s.name}</h2>${tbl(s, s.name === "รายวัน" ? 90 : 25)}`).join("")}`;
+  return `<h1>${title}</h1><div class="meta">${c.company} · ข้อมูล ณ ${thaiDate(c.today)} · สร้างโดย บัญชีจัง วิศวะคุง AI Concierge</div>${kp}${chartSvg}${sheets.map((s) => `<h2>${s.name}</h2>${tbl(s, s.name === "รายวัน" ? 90 : 25)}`).join("")}`;
 }
 
 export const reportFileName = (title: string, ext: string) => `${title.replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, "_")}.${ext}`;

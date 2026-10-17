@@ -1,4 +1,4 @@
-# Cold BrewTech — Python backend (optional, earlier prototype)
+# บัญชีจัง วิศวะคุง — Python backend (optional, earlier prototype)
 
 > The website at https://icemonser.github.io/cold-brewtech/ no longer needs this backend: all calculations now run in the browser (see the root README). This folder keeps the earlier FastAPI prototype that worked on public NKI / market data, for reference.
 

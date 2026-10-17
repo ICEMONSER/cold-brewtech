@@ -1,4 +1,4 @@
-"""Cold BrewTech API — FastAPI app. Run: uvicorn app.main:app --reload"""
+"""บัญชีจัง วิศวะคุง API — FastAPI app. Run: uvicorn app.main:app --reload"""
 from __future__ import annotations
 
 import json
@@ -12,7 +12,7 @@ from .config import settings as cfg
 from .services import concierge, metrics, store
 from .services.forecast import forecast as run_forecast
 
-app = FastAPI(title="Cold BrewTech API", version="0.1.0")
+app = FastAPI(title="บัญชีจัง วิศวะคุง API", version="0.1.0")
 app.add_middleware(CORSMiddleware, allow_origins=cfg.cors_origins, allow_methods=["*"], allow_headers=["*"])
 
 

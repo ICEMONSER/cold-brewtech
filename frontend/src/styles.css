@@ -1,4 +1,4 @@
-/* Cold BrewTech — styles matched to the six reference screens (1586 × 992). */
+/* บัญชีจัง วิศวะคุง — styles matched to the six reference screens (1586 × 992). */
 :root {
   --side: #430e17;
   --side-active: #7a2230;
@@ -660,3 +660,5 @@ button.pill.check:hover { background: #fbd6d3; }
 .fund-dock-t { font-size: 13px; color: #f3d9dc; }
 .fund-dock-v { font-family: "Inter"; font-size: 22px; font-weight: 700; }
 .fund-dock-s { font-size: 11.5px; color: #e6c2c6; line-height: 16px; }
+.brand-name { font-family: "Noto Sans Thai", sans-serif; font-weight: 700; font-size: 21px; letter-spacing: -.2px; line-height: 1.1; margin-top: 0; }
+.brand-sub { margin-top: 5px; }

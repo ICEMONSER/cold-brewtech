@@ -45,7 +45,7 @@ export default function Overview() {
             <span className="unit" style={{ position: "absolute", left: 21, top: 57 }}>ล้านบาท</span>
             <LiveChart w={870} h={360} x0={72} x1={835} yZero={318} yTop={90} yTickX={45} xTickY={346} threshold={threshold}
               series={[{ pts: fc.series, color: "#8b1a24", band: "#f9e4e6" }]} compact />
-            <div className="legend-wrap" style={{ top: 375 }}><Legend items={LEGEND_MAIN} gap={22} /></div>
+            <div className="legend-wrap" style={{ top: 375 }}><Legend items={LEGEND_MAIN} gap={16} /></div>
           </section>
 
           <section className="card ov-table">

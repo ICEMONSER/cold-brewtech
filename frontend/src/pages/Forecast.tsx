@@ -60,11 +60,12 @@ export default function Forecast() {
         <LiveChart w={1296} h={320} x0={76} x1={1250} yZero={281} yTop={80} yTickX={53} xTickY={308} threshold={threshold} history={history}
           series={[{ pts: fc.series, color: "#8b1a24", band: "#f9e4e6", dashed: true }]} />
         <div className="legend-wrap" style={{ top: 326 }}>
-          <Legend gap={28} items={[
+          <Legend gap={20} items={[
             { kind: "line-dot", color: "#8b1a24", label: "เงินสดจริง (ย้อนหลัง)" },
             { kind: "dash", color: "#8b1a24", label: "คาดการณ์เงินสด" },
             { kind: "band", color: "#f9e2e4", label: "ช่วงความไม่แน่นอน" },
             { kind: "thr", color: "#7b8191", label: "เกณฑ์เงินสำรองขั้นต่ำ" },
+            { kind: "band", color: "#f3b3b5", label: "ต่ำกว่าเกณฑ์" },
           ]} />
         </div>
       </section>

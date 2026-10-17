@@ -12,6 +12,7 @@ export const LEGEND_MAIN = [
   { kind: "line-dot" as const, color: "#8b1a24", label: "คาดการณ์เงินสด" },
   { kind: "band" as const, color: "#f9e2e4", label: "ช่วงความไม่แน่นอน" },
   { kind: "thr" as const, color: "#6b7180", label: "เกณฑ์เงินสำรองขั้นต่ำ" },
+  { kind: "band" as const, color: "#f3b3b5", label: "ต่ำกว่าเกณฑ์" },
 ];
 
 // Overview "what if claims rise" slider: stop label → x position (px) on a 338px track

@@ -77,6 +77,17 @@ export default function LiveChart(pr: Props) {
       <line x1={left} x2={left} y1={pr.yTop - 4} y2={pr.yZero} stroke="#e3e5e9" />
       {xTicks.map((t) => <line key={"v" + t.d} x1={X(t.d)} x2={X(t.d)} y1={pr.yTop} y2={pr.yZero + 6} stroke="#f0f1f3" />)}
       {xTicks.map((t, i) => <text key={"t" + t.d} x={X(t.d)} y={pr.xTickY} textAnchor={i === xTicks.length - 1 && X(t.d) > pr.x1 - 10 ? "middle" : "middle"} className="tick" fontSize={ts}>{t.l}</text>)}
+      {/* days below the threshold: red shading + status strip (green = above, red = below) */}
+      {main.map((p, i) => {
+        const below = pr.series.some((s) => s.pts[i] && s.pts[i].cash < pr.threshold);
+        const x0 = X(Math.max(1, p.day - 0.5)), x1 = X(Math.min(H, p.day + 0.5));
+        return (
+          <g key={"z" + p.day}>
+            {below && <rect x={x0} y={pr.yTop} width={x1 - x0} height={pr.yZero - pr.yTop} fill="#e5484d" opacity=".09" />}
+            <rect x={x0} y={pr.yZero + 3} width={x1 - x0 + 0.3} height="6" fill={below ? "#d93a3a" : "#3fb37f"}><title>{`วันที่ ${p.day}: ${below ? "ต่ำกว่าเกณฑ์" : "สูงกว่าเกณฑ์"}`}</title></rect>
+          </g>
+        );
+      })}
       {pr.series.map((s, i) => <path key={"b" + i} d={band(s)} fill={s.band} opacity={s.bandOpacity ?? 1} />)}
       <line x1={left} x2={right} y1={Y(pr.threshold)} y2={Y(pr.threshold)} stroke="#6b7180" strokeWidth="1.1" strokeDasharray="5 4" />
       <text x={X(dMin) + 2} y={Y(pr.threshold) - 8} fontSize={ls} fill="#2b2f38">{pr.thresholdLabel ?? `เกณฑ์เงินสำรองขั้นต่ำ ${fmtM(pr.threshold)}`}</text>

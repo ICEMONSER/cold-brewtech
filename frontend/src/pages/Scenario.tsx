@@ -144,7 +144,7 @@ export default function Scenario() {
               <LiveChart w={664} h={300} x0={63} x1={626} yZero={250} yTop={73} yTickX={40} xTickY={276} tickSize={13.5} labelSize={13.5} threshold={thr} callout="scenario" thresholdLabel={`เงินสำรองขั้นต่ำ ${fmtM(thr)}`}
                 series={[{ pts: base.series, color: "#8b1a24", band: "#f9e4e6" }, { pts: sc.series, color: "#f39a1e", band: "#fdebd2", bandOpacity: 0.7 }]} />
               <div className="legend-wrap" style={{ top: 297 }}>
-                <Legend gap={26} items={[{ kind: "line-dot", color: "#8b1a24", label: "กรณีฐาน (Base Case)" }, { kind: "line-dot", color: "#f39a1e", label: `สถานการณ์ (${pct(applied.shock)})` }, { kind: "thr", color: "#7b8191", label: "เงินสำรองขั้นต่ำ" }]} />
+                <Legend gap={14} items={[{ kind: "line-dot", color: "#8b1a24", label: "กรณีฐาน (Base Case)" }, { kind: "line-dot", color: "#f39a1e", label: `สถานการณ์ (${pct(applied.shock)})` }, { kind: "thr", color: "#7b8191", label: "เงินสำรองขั้นต่ำ" }, { kind: "band", color: "#f3b3b5", label: "ต่ำกว่าเกณฑ์" }]} />
               </div>
             </section>
 

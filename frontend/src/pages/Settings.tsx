@@ -1,88 +1,117 @@
-import { useEffect, useState } from "react";
-import { get, send, upload } from "../api";
-import { Chip, Header, SourceFoot, useData } from "../components/ui";
-
-const FIELDS: [string, string, string, string][] = [
-  ["car_min_pct", "เกณฑ์ CAR ขั้นต่ำ (กำกับดูแล)", "%", "ค่าเริ่มต้น 140% [BKI-2024] — ยืนยันกับประกาศ คปภ."],
-  ["car_internal_target_pct", "เป้าหมาย CAR ภายในบริษัท", "%", "ตั้งตามนโยบายคณะกรรมการ"],
-  ["combined_ratio_max_pct", "Combined Ratio สูงสุด", "%", ">100% = ขาดทุนจากการรับประกัน"],
-  ["liquidity_ratio_min_x", "อัตราส่วนสภาพคล่องขั้นต่ำ", "เท่า", "ค่าทั่วไป 1.0 — ปรับตามนิยามของบริษัท"],
-  ["min_cash_threshold", "เงินสำรองขั้นต่ำ (เงินสด)", "ล้านบาท", "ไม่มีค่าเริ่มต้น — บริษัทต้องกำหนดเอง"],
-  ["alert_lead_days", "ระยะเวลาเตือนล่วงหน้า", "วัน", ""],
-];
+import { useState } from "react";
+import { PageHeader } from "../components/Shell";
+import * as I from "../components/icons";
 
 export default function Settings() {
-  const { reload } = useData();
-  const [s, setS] = useState<any>(null);
-  const [audit, setAudit] = useState<any[]>([]);
-  const [msg, setMsg] = useState("");
-  const [opening, setOpening] = useState("");
-  const load = () => get("/api/settings").then((r) => { setS(r.settings); setAudit(r.audit); });
-  useEffect(() => { load(); }, []);
-  if (!s) return null;
-
-  async function save() {
-    await send("/api/settings", s, "PUT");
-    setMsg("บันทึกแล้ว"); load(); reload();
-  }
-  async function onFile(kind: string, f?: File) {
-    if (!f) return;
-    try { const r = await upload(`/api/companies/NKI/upload/${kind}`, f); setMsg(`${kind}: นำเข้า ${r.rows} แถว`); reload(); }
-    catch (e: any) { setMsg(`${kind}: ${e.message}`); }
-  }
+  const [tab, setTab] = useState(2);
+  const [reserve, setReserve] = useState(40);
+  const [lead, setLead] = useState(7);
+  const [rules, setRules] = useState([true, true]);
+  const [inApp, setInApp] = useState(true);
+  const [email, setEmail] = useState(false);
+  const short = 40 - 32 + (reserve - 40);
 
   return (
     <>
-      <Header title="ตั้งค่าระบบ" />
-      <div className="row">
-        <section className="card" style={{ flex: "999 1 560px" }}>
-          <h2>เกณฑ์สภาพคล่องและเงินกองทุน</h2>
-          <div className="muted">กำหนดเกณฑ์สำหรับการแจ้งเตือน — ทุกค่าแก้ไขได้และบันทึกประวัติ</div>
-          <div className="grid2" style={{ marginTop: 14 }}>
-            {FIELDS.map(([k, label, unit, hint]) => (
-              <label key={k} className="field">{label}
-                <span className="unit-input"><input type="number" value={s[k] ?? ""} onChange={(e) => setS({ ...s, [k]: e.target.value === "" ? null : +e.target.value })} /><span>{unit}</span></span>
-                <span className="muted">{hint}</span>
-              </label>))}
-          </div>
-          <div style={{ display: "flex", gap: 12, marginTop: 16, alignItems: "center" }}>
-            <button className="btn" onClick={save}>บันทึกการตั้งค่า</button>
-            <button className="btn plain" onClick={load}>ยกเลิก</button>
-            <span role="status" className="muted">{msg}</span>
-          </div>
-        </section>
+      <PageHeader title="ตั้งค่าระบบ" />
+      <div className="tabs st-tabs">
+        {["บริษัท", "แหล่งข้อมูล", "การแจ้งเตือน", "สิทธิ์ผู้ใช้"].map((t, i) => (
+          <button key={t} className={tab === i ? "on" : ""} onClick={() => setTab(i)} style={{ marginLeft: [26, 51, 50, 50][i] }}>{t}</button>
+        ))}
+      </div>
 
-        <section className="card" style={{ flex: "1 1 380px" }}>
-          <h2>แหล่งข้อมูลภายในบริษัท</h2>
-          <div className="muted">ใช้สำหรับพยากรณ์รายวัน — ไฟล์ CSV ตามแม่แบบใน backend/templates</div>
-          <label className="field" style={{ marginTop: 12 }}>เงินสดต้นงวด (ล้านบาท)
-            <span className="unit-input"><input type="number" value={opening} onChange={(e) => setOpening(e.target.value)} /><span>ล้านบาท</span></span>
-          </label>
-          <button className="btn ghost" style={{ marginTop: 8 }} onClick={async () => { await send("/api/companies/NKI/opening-cash", { value: opening === "" ? null : +opening }, "PUT"); setMsg("บันทึกเงินสดต้นงวดแล้ว"); reload(); }}>บันทึกเงินสดต้นงวด</button>
-          {["claims", "payments", "scheduled", "receipts"].map((k) => (
-            <label key={k} className="field" style={{ marginTop: 12 }}>{k}.csv
-              <input type="file" accept=".csv" onChange={(e) => onFile(k, e.target.files?.[0])} />
-            </label>))}
+      <div className="st">
+        <div className="st-left">
+          <section className="card st-card">
+            <h3 className="card-title">เกณฑ์สภาพคล่อง</h3>
+            <div className="sub">กำหนดเกณฑ์สำหรับการแจ้งเตือนความเสี่ยงด้านสภาพคล่อง</div>
+            <div className="st-fields">
+              <div>
+                <div className="field-label">เงินสำรองขั้นต่ำ</div>
+                <div className="input"><input type="number" value={reserve} onChange={(e) => setReserve(+e.target.value || 0)} aria-label="เงินสำรองขั้นต่ำ" /><span className="suffix" style={{ width: 87 }}>ล้านบาท</span></div>
+                <div className="hint">แจ้งเตือนเมื่อเงินสดต่ำกว่าเกณฑ์นี้</div>
+              </div>
+              <div>
+                <div className="field-label">ระยะเวลาเตือนล่วงหน้า</div>
+                <div className="input"><input type="number" value={lead} onChange={(e) => setLead(+e.target.value || 0)} aria-label="ระยะเวลาเตือนล่วงหน้า (วัน)" /><span className="suffix" style={{ width: 53, justifyContent: "center", padding: 0 }}>วัน</span></div>
+                <div className="hint">แจ้งเตือนล่วงหน้าก่อนถึงวันที่คาดว่าจะต่ำกว่าเกณฑ์</div>
+              </div>
+            </div>
+          </section>
+
+          <section className="card st-card st-rules">
+            <div className="st-col">
+              <h3 className="card-title">กฎแจ้งเตือน</h3>
+              <div className="sub">เลือกเหตุการณ์ที่ต้องการรับการแจ้งเตือน</div>
+              {[["เงินสดต่ำกว่าเกณฑ์สภาพคล่อง", "แจ้งเตือนเมื่อมีการคาดการณ์ว่าเงินสดจะต่ำกว่าเงินสำรองขั้นต่ำ"], ["ข้อมูลไม่อัปเดตเกิน 24 ชั่วโมง", "แจ้งเตือนเมื่อแหล่งข้อมูลไม่ได้รับการอัปเดตตามเวลาที่กำหนด"]].map(([t, d], i) => (
+                <label key={t} className="st-check" style={{ marginTop: i ? 25 : 23 }}>
+                  <button type="button" className={"cbox" + (rules[i] ? "" : " off")} aria-pressed={rules[i]} onClick={() => setRules(rules.map((v, j) => (j === i ? !v : v)))}>{rules[i] && <I.Check size={16} />}</button>
+                  <span><b>{t}</b><small>{d}</small></span>
+                </label>
+              ))}
+            </div>
+            <div className="st-col right">
+              <h3 className="card-title">ช่องทางแจ้งเตือน</h3>
+              <div className="sub">เลือกช่องทางที่ต้องการรับการแจ้งเตือน</div>
+              <div className="st-toggle" style={{ marginTop: 19 }}>
+                <button type="button" className={"toggle" + (inApp ? " on" : "")} aria-pressed={inApp} onClick={() => setInApp(!inApp)} aria-label="ในระบบ" />
+                <span><b>ในระบบ</b><small>แสดงการแจ้งเตือนในระบบ (สำหรับผู้ใช้ที่มีสิทธิ์)</small></span>
+              </div>
+              <div className="st-toggle" style={{ marginTop: 22 }}>
+                <button type="button" className={"toggle" + (email ? " on" : "")} aria-pressed={email} onClick={() => setEmail(!email)} aria-label="อีเมล" />
+                <span><b>อีเมล</b><small>ส่งอีเมลแจ้งเตือน (ตัวอย่างการใช้งานเท่านั้น)</small></span>
+              </div>
+              <div className="st-actions">
+                <button className="btn">บันทึกการตั้งค่า</button>
+                <button className="btn btn-ghost st-cancel">ยกเลิก</button>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <section className="card st-prev">
+          <div className="sp-head"><h3 className="card-title">ตัวอย่างการแจ้งเตือน</h3><span><I.Eye size={20} />ดูตัวอย่างจากการตั้งค่าปัจจุบัน</span></div>
+          <div className="sp-alert">
+            <div className="sp-top"><span className="bang">!</span><b>วันที่ 20 เงินสดอาจต่ำกว่าเกณฑ์<br />{short} ล้านบาท</b></div>
+            <p>จากการคาดการณ์เงินสด 30 วัน คาดว่าเงินสดจะต่ำกว่าเกณฑ์สภาพคล่อง {reserve} ล้านบาท ในวันที่ 20 โดยมีเงินสดต่ำสุดที่ 32 ล้านบาท (ต่ำกว่าเกณฑ์ {short} ล้านบาท)</p>
+          </div>
+          <dl className="sp-dl">
+            <div><dt>แหล่งข้อมูล</dt><dd>พยากรณ์เงินสด 30 วัน</dd></div>
+            <div><dt>สิทธิ์ผู้ใช้ที่เห็นการแจ้งเตือน</dt><dd>Finance Admin</dd></div>
+            <div><dt>ช่องทางการแจ้งเตือน</dt><dd>{[inApp && "ในระบบ", email && "อีเมล"].filter(Boolean).join(", ") || "-"}</dd></div>
+          </dl>
         </section>
       </div>
 
-      <div className="row">
-        <section className="card" style={{ flex: "999 1 560px" }}>
-          <h2>สถานะการเชื่อมต่อข้อมูล</h2>
-          <table className="t" style={{ marginTop: 10 }}><thead><tr><th>แหล่งข้อมูล</th><th>สถานะ</th><th>ข้อมูลล่าสุด</th></tr></thead><tbody>
-            <tr><td>งบการเงิน NKI [NKI-FH]</td><td><Chip kind="actual">ข้อมูลสาธารณะ</Chip></td><td>FY2568</td></tr>
-            <tr><td>สถิติตลาด IPRB/TIRD, OIC, Milliman</td><td><Chip kind="actual">ข้อมูลสาธารณะ</Chip></td><td>FY2568</td></tr>
-            <tr><td>ระบบเคลม / บัญชี / ธนาคาร ของบริษัท</td><td><Chip kind="gap">อัปโหลดด้วยตนเอง</Chip></td><td>—</td></tr>
-          </tbody></table>
+      <div className="st-bottom">
+        <section className="card st-conn">
+          <h3 className="card-title">สถานะการเชื่อมต่อข้อมูล</h3>
+          <table className="tbl">
+            <colgroup><col style={{ width: 136 }} /><col style={{ width: 144 }} /><col style={{ width: 143 }} /><col style={{ width: 113 }} /><col style={{ width: 118 }} /><col /></colgroup>
+            <thead><tr><th>แหล่งข้อมูล</th><th>สถานะ</th><th>ข้อมูลล่าสุด</th><th>อัปเดตล่าสุด</th><th>การดำเนินการ</th><th /></tr></thead>
+            <tbody>
+              {[[<I.Doc size={20} />, "กรมธรรม์"], [<I.Shield size={20} />, "เคลม"], [<I.Bars4 size={20} />, "บัญชี"]].map(([ic, n]) => (
+                <tr key={n as string}>
+                  <td><span className="st-src">{ic}{n}</span></td>
+                  <td className="th"><span className="st-dot" />ข้อมูลตัวอย่าง</td>
+                  <td className="th">ข้อมูลถึงปัจจุบัน</td>
+                  <td>09:00</td>
+                  <td><span className="pill check">ตรวจสอบ</span></td>
+                  <td><button className="dots" aria-label="เพิ่มเติม"><I.Dots size={18} /></button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </section>
-        <section className="card" style={{ flex: "1 1 380px" }}>
-          <h2>ประวัติการเปลี่ยนแปลง</h2>
-          {audit.length ? <table className="t" style={{ marginTop: 10 }}><thead><tr><th>เวลา</th><th>รายการ</th></tr></thead>
-            <tbody>{audit.map((x, i) => <tr key={i}><td>{x.ts}</td><td style={{ wordBreak: "break-all" }}>{x.item}</td></tr>)}</tbody></table>
-            : <p className="muted">ยังไม่มีการเปลี่ยนแปลงที่บันทึก</p>}
+        <section className="card st-hist">
+          <div className="sh-head"><h3 className="card-title">ประวัติการเปลี่ยนแปลง</h3><button className="select sh-sel"><I.Refresh size={18} /><span>ทั้งหมด</span><I.Chevron size={18} /></button></div>
+          <div className="sh-box">
+            <div className="sh-row hd"><span>เวลา</span><span>รายการ</span><span>ผู้ดำเนินการ</span></div>
+            <div className="sh-row"><span>5 พ.ย. 2567&nbsp;&nbsp;10:24</span><span>แก้ไขเกณฑ์สภาพคล่องขั้นต่ำ<br />จาก 30 เป็น 40 ล้านบาท</span><span>Finance Admin</span></div>
+            <div className="sh-empty"><I.FileBlank size={28} /><b>ยังไม่มีการเปลี่ยนแปลงที่บันทึกเพิ่มเติม</b><small>การเปลี่ยนแปลงการตั้งค่าจะแสดงที่นี่</small></div>
+          </div>
         </section>
       </div>
-      <SourceFoot ids={["BKI-2024", "NKI-FH"]} />
     </>
   );
 }

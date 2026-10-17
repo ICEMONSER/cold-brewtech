@@ -3,7 +3,9 @@
 > An AI-powered concierge that connects claims data to proactive cash-flow forecasting for Thai non-life insurers.
 > Concept: ExpresSO NB Co., Ltd. (Isaree Wongariyaporn, Ramida Khampao). Design: “Concept 1 — maroon console”, six screens.
 
-The website has six screens, matching the selected design:
+The website has six screens, built to match the six reference screens pixel-for-pixel at 1586 × 992. **The frontend is a standalone static site** — every number on screen is sample data (ข้อมูลสมมติ) from `frontend/src/data.ts` and the page files, so it runs without the backend.
+
+The six screens:
 
 | Screen | Thai label | What it shows |
 |---|---|---|
@@ -32,7 +34,8 @@ Nothing on screen is invented.
 | Frontend framework | **React 18 + TypeScript** | Builds the six screens from shared components (sidebar, header, KPI card, gap state, concierge) | Large ecosystem. Types catch data-shape mistakes in financial UIs. |
 | Build tool | **Vite 5** | Dev server and production bundle | Fast startup. Zero-config TypeScript. |
 | Routing | **React Router 6** | One URL per screen (`/`, `/forecast`, `/claims`, …) | Standard, small |
-| Charts | **Recharts 2** | Forecast line + uncertainty band, waterfall, bar charts | Declarative React charts. Supports range areas for the forecast band. |
+| Charts | Hand-drawn SVG (`src/components/CashChart.tsx`) | Forecast line + uncertainty band, waterfall, bar charts | Drawn in each card's own pixel space so they line up exactly with the reference design |
+| Fonts | Self-hosted via `@fontsource` (Noto Sans Thai, Inter, Crimson Pro) | Thai UI text, numbers, logo wordmark | Works offline and renders the same on every machine |
 | Styling | Plain CSS with design tokens (`src/styles.css`) | Maroon palette, Noto Sans Thai, responsive grid | No CSS framework lock-in. Tokens mirror the approved mock-up. |
 | Backend API | **Python 3.11+ / FastAPI** | REST endpoints for data, formulas, forecast, scenarios, alerts, uploads, AI | Python is the natural language for actuarial and forecast maths. FastAPI gives typed validation and auto docs at `/docs`. |
 | Server | **Uvicorn** | ASGI server for FastAPI | Default, production-grade |
@@ -96,7 +99,7 @@ These are list prices checked from public pricing write-ups in Oct 2026 and are 
 
 | Item | Free tier | Paid / usage pricing | Source |
 |---|---|---|---|
-| React, Vite, Recharts, FastAPI, SQLite, pytest | Open source, free | — | — |
+| React, Vite, FastAPI, SQLite, pytest | Open source, free | — | — |
 | **Claude API**: Sonnet 4.6 (default) | None | $3 / M input tokens, $15 / M output tokens | [Morph pricing summary](https://www.morphllm.com/anthropic-claude-api-pricing) |
 | Claude API: Haiku 4.5 (cheaper option) | — | $1 / M input, $5 / M output | same |
 | **Frontend hosting: Vercel** | Hobby: $0, **non-commercial use only** | Pro: $20 per developer seat/month, includes $20 of usage | [livemy.app Vercel pricing](https://livemy.app/blog/vercel-pricing) |
@@ -217,7 +220,6 @@ uvicorn app.main:app --reload --port 8000
 # Frontend (second terminal)
 cd frontend
 npm install
-cp .env.example .env            # VITE_API_URL=http://localhost:8000
 npm run dev                     # http://localhost:5173
 npm run build                   # production bundle in dist/
 ```
@@ -242,7 +244,7 @@ The forecast, claim list and upcoming-payment panels fill in automatically.
 
 **Deploying.**
 
-- **Frontend:** deploy `frontend/` to Vercel or any static host, with `VITE_API_URL` set to the backend URL.
+- **Frontend:** deploy `frontend/dist` to Vercel or any static host. Routes are client-side (`/forecast`, `/claims`, …), so configure the host to serve `index.html` for unknown paths.
 - **Backend:** deploy `backend/` to Render or similar with the start command `uvicorn app.main:app --host 0.0.0.0 --port $PORT`. Attach a persistent disk for SQLite, or migrate to Postgres.
 
 **Updating public data.** Edit `backend/app/data/public_data.json`. Give every new figure a `source` ID that exists in `sources`, and a `status`. Then run the tests.

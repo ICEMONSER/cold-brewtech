@@ -13,31 +13,34 @@ export function useBaseFund(): FundCtx & { show: boolean } {
   return useMemo(() => {
     const uw = underwriting(ds, today);
     const f = forecast(ds, { horizon, today, threshold });
-    const shortfall = f.breach && !f.breach.earlyWarning ? f.breach.shortfall : 0;
+    const h = f.headroom;
     const loss = Math.max(0, -uw.result);
-    const need = shortfall > 0 ? Math.ceil(shortfall / 1e6) * 1e6 : Math.ceil(loss / 1e6) * 1e6;
-    const firstBreach = f.series.find((p) => p.cash < threshold)?.day;
+    // when to borrow: Liquidity Headroom (cash − minimum reserve) goes below 0; an underwriting loss also triggers it
+    const shortfall = Math.max(0, -h.min);
+    const need = h.need > 0 ? h.need : Math.ceil(loss / 1e6) * 1e6;
     return {
-      key: `base:${Math.round(need / 1e5)}:${loans.length}`, kind: "base" as const, title: "ขาดทุนจากการรับประกัน — จัดหาเงินทุน",
-      dockLabel: `ขาดทุนรับประกัน ${fmtM(uw.result)} · กดเพื่อเลือกแหล่งกู้`,
-      need, shortfall, troughCash: f.trough.cash, troughDay: f.trough.day, drawDay: Math.max(2, (firstBreach ?? 2) - 1), threshold,
-      headline: { label: "ผลรับประกัน 30 วัน", value: fmtM(uw.result), sub: `Combined Ratio ${(uw.combined * 100).toFixed(0)}%` },
+      key: `base:${Math.round(need / 1e5)}:${loans.length}`, kind: "base" as const,
+      title: shortfall > 0 ? "Liquidity Headroom ติดลบ — จัดหาเงินทุน" : "ขาดทุนจากการรับประกัน — จัดหาเงินทุน",
+      dockLabel: shortfall > 0 ? `Headroom ติดลบ ${fmtM(shortfall)} · กดเพื่อเลือกแหล่งกู้` : `ขาดทุนรับประกัน ${fmtM(uw.result)} · กดเพื่อเลือกแหล่งกู้`,
+      need, shortfall, troughCash: f.trough.cash, troughDay: f.trough.day, drawDay: h.borrowDay ?? 1, threshold, minHeadroom: h.min, firstNegDay: h.firstNegDay,
+      headline: shortfall > 0
+        ? { label: "Liquidity Headroom ต่ำสุด", value: fmtM(h.min), sub: `ติดลบตั้งแต่วันที่ ${h.firstNegDay}` }
+        : { label: "ผลรับประกัน 30 วัน", value: fmtM(uw.result), sub: `Combined Ratio ${(uw.combined * 100).toFixed(0)}%` },
       sim: (extra) => forecast({ ...ds, ledger: [...ds.ledger, ...extra] }, { horizon, today, threshold }),
-      show: uw.result < 0 && need > 0 && (shortfall > 0 || loans.length === 0),
+      show: need > 0 && (shortfall > 0 || (uw.result < 0 && loans.length === 0)),
     };
   }, [ds, today, threshold, horizon, loans.length]);
 }
 
 /** Build a funding context for any simulated forecast (used by the scenario page). */
 export function scenarioFundCtx(f: Forecast, threshold: number, label: string, sim: FundCtx["sim"]): FundCtx | null {
-  const shortfall = Math.max(0, threshold - f.trough.cash);
-  if (shortfall <= 0) return null;
-  const firstBreach = f.series.find((p) => p.cash < threshold)?.day ?? f.trough.day;
-  const need = Math.ceil(shortfall / 1e6) * 1e6;
+  const h = f.headroom;
+  if (h.need <= 0) return null;
+  const shortfall = -h.min, need = h.need;
   return {
     key: `sc:${label}:${Math.round(need / 1e5)}`, kind: "scenario", title: `สถานการณ์ ${label} — จัดหาเงินกู้รองรับ`,
     dockLabel: `สถานการณ์ ${label} ขาด ${fmtM(shortfall)} · กดเพื่อเลือกแหล่งกู้`,
-    need, shortfall, troughCash: f.trough.cash, troughDay: f.trough.day, drawDay: Math.max(2, firstBreach - 1), threshold,
+    need, shortfall, troughCash: f.trough.cash, troughDay: f.trough.day, drawDay: h.borrowDay ?? 1, threshold, minHeadroom: h.min, firstNegDay: h.firstNegDay,
     headline: { label: "สถานการณ์จำลอง", value: label, sub: `เงินสดปลายงวด ${fmtM(f.closing)}` }, sim,
   };
 }
@@ -114,7 +117,14 @@ function FundingModal({ ctx: n, onClose }: { ctx: FundCtx; onClose: () => void }
       <div className="fund-sum">
         <div><small>{n.headline.label}</small><b className="red">{n.headline.value}</b><em>{n.headline.sub}</em></div>
         <div><small>เงินสดต่ำสุด</small><b>{fmtM(n.troughCash)}</b><em>วันที่ {n.troughDay} · เกณฑ์ {fmtM(n.threshold)}</em></div>
-        <div><small>เงินที่ต้องจัดหา</small><b className="red">{fmtM(n.need)}</b><em>{n.shortfall > 0 ? `ปิดช่องว่างสภาพคล่อง ${fmtM(n.shortfall)}` : "ชดเชยผลขาดทุน"}</em></div>
+        <div><small>เงินที่ต้องจัดหา</small><b className="red">{fmtM(n.need)}</b><em>{n.shortfall > 0 ? `ปิด Headroom ที่ติดลบ ${fmtM(n.shortfall)}` : "ชดเชยผลขาดทุน"}</em></div>
+      </div>
+      <div className="fund-hr">
+        <b>Liquidity Headroom</b> = เงินสดคาดการณ์ − เกณฑ์เงินสำรองขั้นต่ำ ({fmtM(n.threshold)})
+        <span>{n.firstNegDay
+          ? <>ต่ำสุด <b className="red">{fmtM(n.minHeadroom)}</b> วันที่ {n.troughDay} · เริ่มติดลบวันที่ {n.firstNegDay} ({thaiDate(addDays(app.today, n.firstNegDay - 1))}) → ต้องกู้ภายในวันที่ {n.drawDay} ({thaiDate(drawDate)})</>
+          : <>ต่ำสุด <b className="green">{fmtM(n.minHeadroom)}</b> ไม่ติดลบ · เบิกได้ตั้งแต่วันที่ {n.drawDay}</>}
+          {" · "}รวมวงเงิน O/D คงเหลือ = <b className={n.minHeadroom + odLeft < 0 ? "red" : "green"}>{fmtM(n.minHeadroom + odLeft)}</b></span>
       </div>
 
       <div className={"fund-ai" + (odOk ? " od" : "")}>

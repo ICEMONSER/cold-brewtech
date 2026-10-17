@@ -14,12 +14,16 @@
 import { addDays, diffDays } from "./format";
 import type { Claim, Datasets, Ledger } from "./types";
 
-export type DayPoint = { day: number; date: string; cash: number; low: number; high: number; receipts: number; claims: number; other: number };
+export type DayPoint = { day: number; date: string; cash: number; headroom: number; low: number; high: number; receipts: number; claims: number; other: number };
 export type Contributor = { claim_id: string; line: string; status: string; amount: number; day: number; date: string; kind: "scheduled" | "expected"; reserve: number };
 export type Forecast = {
   ok: boolean; missing: string[]; today: string; horizon: number; opening: number; balanceDate: string;
   series: DayPoint[]; trough: DayPoint; closing: number; threshold: number;
   breach: null | { day: number; date: string; cash: number; shortfall: number; earlyWarning: boolean };
+  /** Liquidity Headroom(t) = เงินสดคาดการณ์(t) − เกณฑ์เงินสำรองขั้นต่ำ.
+   *  Borrowing is needed when headroom turns negative: draw the day before it first goes below 0,
+   *  amount = |min headroom| rounded up to ฿1M. */
+  headroom: { min: number; minDay: number; minDate: string; firstNegDay: number | null; firstNegDate: string | null; borrowDay: number | null; need: number };
   totals: { receipts: number; claims: number; other: number; scheduledClaims: number; expectedClaims: number };
   byLine: Record<string, number>; contributors: Contributor[]; receiptItems: (Ledger & { day: number })[];
   sigma: number; openClaims: number;
@@ -147,7 +151,7 @@ export function forecast(ds: Datasets, o: ForecastOpts): Forecast {
     if (t > 0) cash += receipts[t] - claims[t] - other[t];
     cum += claims[t];
     const band = 1.645 * sigma * Math.sqrt(cum / claimSum) + opening * 0.004 * Math.sqrt(t);
-    series.push({ day: t + 1, date: addDays(today, t), cash, low: cash - band, high: cash + band, receipts: receipts[t], claims: claims[t], other: other[t] });
+    series.push({ day: t + 1, date: addDays(today, t), cash, headroom: cash - o.threshold, low: cash - band, high: cash + band, receipts: receipts[t], claims: claims[t], other: other[t] });
   }
   const trough = series.reduce((m, p) => (p.cash < m.cash ? p : m), series[0]);
   const first = series.find((p) => p.cash < o.threshold);
@@ -155,8 +159,16 @@ export function forecast(ds: Datasets, o: ForecastOpts): Forecast {
   const breach = first
     ? { day: trough.cash < o.threshold ? trough.day : first.day, date: trough.cash < o.threshold ? trough.date : first.date, cash: trough.cash, shortfall: o.threshold - trough.cash, earlyWarning: false }
     : early ? { day: early.day, date: early.date, cash: early.cash, shortfall: 0, earlyWarning: true } : null;
+  const neg = series.find((p) => p.headroom < 0);
+  const headroom = {
+    min: trough.headroom, minDay: trough.day, minDate: trough.date,
+    firstNegDay: neg?.day ?? null, firstNegDate: neg?.date ?? null,
+    borrowDay: neg ? Math.max(1, neg.day - 1) : null,
+    need: trough.headroom < 0 ? Math.ceil(-trough.headroom / 1e6) * 1e6 : 0,
+  };
   contributors.sort((a, b) => b.amount - a.amount);
   return {
+    headroom,
     ok: missing.length === 0, missing, today, horizon: H, opening, balanceDate, series, trough, closing: series[H - 1].cash, threshold: o.threshold, breach,
     totals: { receipts: sum(receipts), claims: sum(claims), other: sum(other), scheduledClaims: scheduledTotal, expectedClaims: expectedTotal },
     byLine, contributors, receiptItems: receiptItems.sort((a, b) => a.day - b.day), sigma, openClaims,

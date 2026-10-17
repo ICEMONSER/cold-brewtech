@@ -647,6 +647,8 @@ button.pill.check:hover { background: #fbd6d3; }
 .fund-sum small { display: block; color: var(--muted); font-size: 12.5px; }
 .fund-sum b { font-family: "Inter"; font-size: 22px; display: block; }
 .fund-sum em { font-style: normal; font-size: 12.5px; color: var(--muted); }
+.fund-hr { margin-top: 10px; border: 1px dashed #d9c3c6; border-radius: 8px; padding: 8px 14px; font-size: 13.5px; line-height: 21px; }
+.fund-hr > b { color: #8b1a24; } .fund-hr > span { display: block; color: var(--ink); }
 .fund-ai { margin-top: 12px; background: #eef3fc; border-radius: 8px; padding: 10px 14px; }
 .fund-ai > b { color: #1e3a8a; font-size: 14px; } .fund-ai p { margin: 4px 0 0; color: var(--ink); }
 .fund-ai.od { background: #eef8f1; } .fund-ai.od > b { color: #1b7f47; }

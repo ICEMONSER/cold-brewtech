@@ -126,8 +126,8 @@ export default function Forecast() {
             </tbody>
           </table>
           <div className={"alert mini" + (fc.trough.cash < threshold ? "" : " ok")}>
-            <span className="bang">{fc.trough.cash < threshold ? "!" : <I.Check size={15} />}</span><span className="mini-txt"><span>เงินสดต่ำสุด <b>{fmtM(fc.trough.cash)}</b> ในวันที่ {fc.trough.day}</span>
-            <span className={fc.trough.cash < threshold ? "red" : "green"}>{fc.trough.cash < threshold ? `ต่ำกว่าเกณฑ์ ${fmtM(threshold - fc.trough.cash)}` : `สูงกว่าเกณฑ์ ${fmtM(fc.trough.cash - threshold)}`}</span></span>
+            <span className="bang">{fc.trough.cash < threshold ? "!" : <I.Check size={15} />}</span><span className="mini-txt"><span>Liquidity Headroom ต่ำสุด <b>{fmtM(fc.headroom.min)}</b> ในวันที่ {fc.headroom.minDay}</span>
+            <span className={fc.headroom.min < 0 ? "red" : "green"}>{fc.headroom.borrowDay ? `ติดลบตั้งแต่วันที่ ${fc.headroom.firstNegDay} → ต้องกู้ ${fmtM(fc.headroom.need)} ภายในวันที่ ${fc.headroom.borrowDay}` : "ไม่ติดลบ ไม่ต้องกู้"}</span></span>
           </div>
         </section>
 

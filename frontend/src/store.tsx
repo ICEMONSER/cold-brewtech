@@ -29,6 +29,7 @@ export const DEFAULT_BANKS: Bank[] = [
 export type FundCtx = {
   key: string; kind: "base" | "scenario"; title: string; dockLabel: string;
   need: number; shortfall: number; troughCash: number; troughDay: number; drawDay: number; threshold: number;
+  minHeadroom: number; firstNegDay: number | null;
   headline: { label: string; value: string; sub: string };
   sim: (extra: Ledger[]) => Forecast;
 };

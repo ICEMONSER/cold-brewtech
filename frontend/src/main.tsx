@@ -73,4 +73,18 @@ function App() {
   );
 }
 
+/* Screens narrower than the 1586-px design: shrink the page to fit (never enlarge it).
+ * Wider screens keep 100% size and the content is centered beside the sidebar. */
+const DESIGN_W = 1586;
+function fit() {
+  const root = document.documentElement;
+  root.style.zoom = "1";
+  const w = root.clientWidth || window.innerWidth;
+  const z = Math.max(0.6, Math.min(1, w / DESIGN_W));
+  root.style.zoom = z < 1 ? String(z) : "";
+  root.style.setProperty("--z", String(z));
+}
+fit();
+window.addEventListener("resize", fit);
+
 createRoot(document.getElementById("root")!).render(<App />);

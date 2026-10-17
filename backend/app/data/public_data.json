@@ -1,0 +1,146 @@
+{
+  "_comment": "Every figure here was taken from a public source on or before 2026-10-17. status: actual = published by the source; forecast = a third party's published forecast; derived = arithmetic on actual figures (formula shown). Amounts in million THB unless 'unit' says otherwise.",
+  "sources": {
+    "NKI-FH": {
+      "title": "The Navakij Insurance PCL (SET: NKI) — Financial Highlights FY2025 vs FY2024 (restated)",
+      "url": "https://www.navakij.co.th/en/financial-information/financial-highlights",
+      "publisher": "The Navakij Insurance PCL",
+      "update_frequency": "Annual (company IR page); quarterly statements via SET",
+      "usage": "Public investor-relations disclosure. Cite the company; do not imply endorsement. 2025 CAR marked 'not yet certified by auditor'."
+    },
+    "TIRD-2024": {
+      "title": "Performance Overview of Thailand's Non-Life Insurance Industry, 2024",
+      "url": "https://www.tird.insure/en/performance-overview-of-thailands-non-life-insurance-industry-2024/",
+      "publisher": "Thai Insurance Research & Development Co., Ltd. (TIRD)",
+      "update_frequency": "Annual",
+      "usage": "Public article. Quote with attribution; check TIRD terms before bulk redistribution."
+    },
+    "SRIKRUNG-IPRB-TIRD": {
+      "title": "สถิติประกันวินาศภัยล่าสุด เปรียบเทียบปี 2567–2568 (citing IPRB Flash Report FY2024 and TIRD Overview Non-Life, data as at Dec 2025)",
+      "url": "https://srikrungbroker.co.th/article-non-life-insurance-statistics-2024-2025/",
+      "publisher": "Srikrung Broker (secondary source quoting IPRB / TIRD)",
+      "update_frequency": "Annual (underlying IPRB/TIRD data: monthly flash reports)",
+      "usage": "Secondary source. Replace with the IPRB/TIRD original report when obtained."
+    },
+    "OIC-2025": {
+      "title": "คปภ. เผยธุรกิจประกันภัยไทยปี 2568 — non-life direct premiums and net profit",
+      "url": "https://www.thethaipress.com/2026/163485",
+      "publisher": "Office of Insurance Commission (OIC), reported by The Thai Press, 19 May 2026",
+      "update_frequency": "Annual press release; OIC publishes monthly statistics",
+      "usage": "Public regulator statistics, reported via press."
+    },
+    "MILLIMAN-2026": {
+      "title": "Milliman Thailand General Insurance Newsletter, March 2026 (FY2025)",
+      "url": "https://media.milliman.com/v1/media/edge/images/millimaninc5660-milliman6442-prod27d5-0001/media/Milliman/PDFs/2026-Articles/3-27-26_Thailand-General-Insurance-Newsletter.pdf",
+      "publisher": "Milliman",
+      "update_frequency": "Roughly quarterly",
+      "usage": "Public newsletter. Attribute to Milliman; some line-level growth figures are read from charts."
+    },
+    "THAIRE-2025": {
+      "title": "Thai Re research outlook for non-life premiums 2568–2569 (Bangkok Biznews, 7 Nov 2025)",
+      "url": "https://www.bangkokbiznews.com/finance/investment/1206527",
+      "publisher": "Thai Reinsurance PCL, via Bangkok Biznews",
+      "update_frequency": "Annual outlook",
+      "usage": "Third-party forecast — never shown as actual."
+    },
+    "BKI-2024": {
+      "title": "Bangkok Insurance PCL, 56-1 One Report 2024, p.22 (regulatory minimum CAR 140%)",
+      "url": "https://bangkokinsurance.com/uploaded/documentdownload/1/onereport_2024EN.pdf?ver=1.1",
+      "publisher": "Bangkok Insurance PCL",
+      "update_frequency": "Annual",
+      "usage": "Secondary reference for the OIC minimum CAR; confirm against OIC notification before production use."
+    }
+  },
+  "companies": {
+    "NKI": {
+      "name_th": "บมจ. นวกิจประกันภัย",
+      "name_en": "The Navakij Insurance PCL",
+      "ticker": "SET:NKI",
+      "source": "NKI-FH",
+      "periods": {
+        "2025": {
+          "insurance_revenue": 3543.22,
+          "insurance_service_expenses": 5185.61,
+          "net_reinsurance_result": 971.84,
+          "insurance_service_result": -670.55,
+          "net_investment_income": 58.42,
+          "profit_before_tax": -730.52,
+          "net_profit": -583.52,
+          "total_assets": 5199.75,
+          "total_liabilities": 3541.88,
+          "equity": 1657.87,
+          "cfo": 194.80,
+          "cfi": -9.10,
+          "cff": -17.09,
+          "combined_ratio_pct": 118.92,
+          "liquidity_ratio_x": 0.74,
+          "car_pct": 206.40,
+          "car_audited": false
+        },
+        "2024": {
+          "insurance_revenue": 3848.28,
+          "insurance_service_expenses": 3618.10,
+          "net_reinsurance_result": -261.45,
+          "insurance_service_result": -31.27,
+          "net_investment_income": 85.64,
+          "profit_before_tax": -72.52,
+          "net_profit": -57.00,
+          "total_assets": 4666.23,
+          "total_liabilities": 2445.20,
+          "equity": 2221.03,
+          "cfo": 68.16,
+          "cfi": -25.23,
+          "cff": -71.06,
+          "combined_ratio_pct": 100.81,
+          "liquidity_ratio_x": 1.38,
+          "car_pct": 381.65,
+          "car_audited": true,
+          "note": "2024 restated by the company."
+        }
+      },
+      "not_public": [
+        "Daily / weekly cash balance and bank data",
+        "Claim-level records (claim IDs, reserves, due dates, status)",
+        "Open-claim count",
+        "Claims split by line of business (motor / health / property) for this company",
+        "Premium receivable collection schedule",
+        "Opening cash balance on the company IR page (third-party aggregators disagree, so it is not used)"
+      ]
+    }
+  },
+  "market": {
+    "direct_premiums": [
+      {"period": "2024", "value": 286458, "status": "actual", "source": "SRIKRUNG-IPRB-TIRD", "note": "IPRB Flash Report FY2024"},
+      {"period": "2025", "value": 293118, "status": "actual", "source": "SRIKRUNG-IPRB-TIRD", "note": "TIRD, data as at Dec 2025"},
+      {"period": "2025", "value": 292785, "status": "actual", "source": "OIC-2025", "note": "OIC figure; differs from TIRD by 333 MTHB (different cut-off/definition)"},
+      {"period": "2026", "low": 298000, "high": 302000, "status": "forecast", "source": "THAIRE-2025", "note": "Thai Re outlook; growth 2.2–2.9%"}
+    ],
+    "policies_million": [
+      {"period": "2024", "value": 66.40, "status": "actual", "source": "SRIKRUNG-IPRB-TIRD"},
+      {"period": "2025", "value": 70.35, "status": "actual", "source": "SRIKRUNG-IPRB-TIRD"}
+    ],
+    "premiums_by_line_2025": [
+      {"line": "รถยนต์ภาคสมัครใจ (Voluntary motor)", "value": 143243.9, "status": "actual", "source": "SRIKRUNG-IPRB-TIRD"},
+      {"line": "รถยนต์ภาคบังคับ (Compulsory motor)", "value": 20662.3, "status": "actual", "source": "SRIKRUNG-IPRB-TIRD"},
+      {"line": "เบ็ดเตล็ด (Miscellaneous incl. health, PA, IAR)", "value": 111339.4, "status": "actual", "source": "SRIKRUNG-IPRB-TIRD"},
+      {"line": "อัคคีภัย (Fire)", "value": 11404.9, "status": "actual", "source": "SRIKRUNG-IPRB-TIRD"},
+      {"line": "ทะเลและขนส่ง (Marine & cargo)", "value": 6467.5, "status": "actual", "source": "SRIKRUNG-IPRB-TIRD"}
+    ],
+    "loss_ratio_2024_pct": [
+      {"line": "สุขภาพ (Health)", "value": 65.42},
+      {"line": "รถยนต์ภาคสมัครใจ (Voluntary motor)", "value": 59.85},
+      {"line": "อุบัติเหตุส่วนบุคคล (PA)", "value": 48.61},
+      {"line": "เบ็ดเตล็ด (Misc.)", "value": 39.36},
+      {"line": "ทะเลและขนส่ง (Marine)", "value": 29.84},
+      {"line": "อัคคีภัย (Fire)", "value": 20.97},
+      {"line": "รวมทุกประเภท (All lines)", "value": 57.13}
+    ],
+    "loss_ratio_source": "TIRD-2024",
+    "claims_incurred_2025": {"value": 236800, "status": "actual", "source": "MILLIMAN-2026", "note": "Industry TFRS 17 claims incurred"},
+    "insurance_revenue_2025": {"value": 302700, "status": "actual", "source": "MILLIMAN-2026"},
+    "health_growth_2025_pct": {"value": 18, "status": "actual", "source": "MILLIMAN-2026", "note": "OIC reports +19.75% on its own basis"},
+    "net_profit_2025": {"value": 11677, "status": "actual", "source": "OIC-2025", "note": "Industry net profit, −25.20% YoY"},
+    "southern_flood_2025": {"motor_losses": 12500, "motor_vehicles": 27800, "non_motor_losses": 3500, "as_of": "2025-12-15", "status": "actual", "source": "MILLIMAN-2026"},
+    "car_regulatory_min_pct": {"value": 140, "status": "actual", "source": "BKI-2024"}
+  }
+}

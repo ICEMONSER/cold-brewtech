@@ -7,3 +7,4 @@ backend/var/
 *.sqlite3
 .env
 *.tsbuildinfo
+dist-pages/

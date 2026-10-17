@@ -23,7 +23,7 @@ import Settings from "./pages/Settings";
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, "")}>
       <div className="app">
         <Sidebar />
         <main className="main">

@@ -244,6 +244,7 @@ The forecast, claim list and upcoming-payment panels fill in automatically.
 
 **Deploying.**
 
+- **GitHub Pages (live demo):** https://icemonser.github.io/cold-brewtech/ is served from the repository root of `main` (`index.html`, `404.html`, `assets/`). After changing the frontend, run `cd frontend && npm run build:pages` and commit the regenerated root files. GitHub Pages hosts static files only, so the Python backend does not run there.
 - **Frontend:** deploy `frontend/dist` to Vercel or any static host. Routes are client-side (`/forecast`, `/claims`, …), so configure the host to serve `index.html` for unknown paths.
 - **Backend:** deploy `backend/` to Render or similar with the start command `uvicorn app.main:app --host 0.0.0.0 --port $PORT`. Attach a persistent disk for SQLite, or migrate to Postgres.
 

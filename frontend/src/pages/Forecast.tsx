@@ -125,9 +125,9 @@ export default function Forecast() {
               <tr className="total"><td className="th">เงินสดปลายงวด</td><td style={{ textAlign: "right" }}>{mNum(fc.closing)}</td></tr>
             </tbody>
           </table>
-          <div className={"alert mini" + (fc.breach && !fc.breach.earlyWarning ? "" : " ok")}>
-            <span className="bang">!</span><span>เงินสดต่ำสุด <b>{fmtM(fc.trough.cash)}</b> ในวันที่ {fc.trough.day}</span><span className="bar">|</span>
-            <span className={fc.trough.cash < threshold ? "red" : "green"}>{fc.trough.cash < threshold ? `ต่ำกว่าเกณฑ์ ${fmtM(threshold - fc.trough.cash)}` : `สูงกว่าเกณฑ์ ${fmtM(fc.trough.cash - threshold)}`}</span>
+          <div className={"alert mini" + (fc.trough.cash < threshold ? "" : " ok")}>
+            <span className="bang">{fc.trough.cash < threshold ? "!" : <I.Check size={15} />}</span><span className="mini-txt"><span>เงินสดต่ำสุด <b>{fmtM(fc.trough.cash)}</b> ในวันที่ {fc.trough.day}</span>
+            <span className={fc.trough.cash < threshold ? "red" : "green"}>{fc.trough.cash < threshold ? `ต่ำกว่าเกณฑ์ ${fmtM(threshold - fc.trough.cash)}` : `สูงกว่าเกณฑ์ ${fmtM(fc.trough.cash - threshold)}`}</span></span>
           </div>
         </section>
 

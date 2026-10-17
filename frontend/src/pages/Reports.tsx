@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { Legend } from "../components/CashChart";
 import LiveChart from "../components/LiveChart";
 import { useReportActions } from "../components/reportActions";
-import { PageHeader, SampleChip } from "../components/Shell";
+import { PageHeader } from "../components/Shell";
 import { Dropdown, Menu, Modal } from "../components/ui";
 import * as I from "../components/icons";
 import { claimRows, underwriting } from "../engine/analytics";
@@ -112,7 +112,6 @@ function Preview({ r, title, onSchedule }: { r: ReportItem; title: string; onSch
         <div className="rp-name-row">
           <span style={{ color: "#8b1a24", display: "inline-flex", flex: "none" }}>{KIND_ICON[r.kind] ?? <I.Bars4 size={28} />}</span>
           <h2>{title}</h2>
-          <SampleChip small />
         </div>
         <div className="rp-actions">
           <button className="btn rp-pdf" onClick={() => rep.pdf(r.kind, title, r.params)}><I.FilePdf size={20} />ดาวน์โหลด PDF</button>

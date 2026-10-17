@@ -69,7 +69,6 @@ export function PageHeader({ title, selects, gap = 105 }: { title: string; selec
   return (
     <header className="page-head">
       <h1>{title}</h1>
-      <SampleChip />
       <div className="head-selects" style={{ marginRight: gap }}>
         <Dropdown label="บริษัท" icon={<I.Building size={20} />} w={w1} value="a" options={[{ value: "a", label: settings.company }]} onChange={() => {}} footer={{ label: "แก้ไขข้อมูลบริษัท…", onClick: () => nav("/settings?tab=company") }} />
         <Dropdown label="ช่วงเวลา" icon={<I.Calendar size={21} />} w={w2} value={horizon} onChange={(v) => setHorizon(v)} options={[30, 60, 90].map((d) => ({ value: d, label: `${d} วันข้างหน้า` }))} />

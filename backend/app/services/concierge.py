@@ -56,9 +56,41 @@ def _fallback(question: str, facts: dict) -> dict:
     return {"answer": "\n".join(lines), "mode": "offline-fallback", "model": None}
 
 
-def ask(question: str, facts: dict, history: list[dict] | None = None) -> dict:
+DEMO_PROMPT = """You are the Cold BrewTech AI Concierge running in DEMO MODE for a fictional insurer
+"บริษัทประกัน A". Every figure in <facts> is an ASSUMPTION created for demonstration (ข้อมูลสมมติ).
+Answer in the user's language. Use only <facts>; never invent numbers. Say once that figures are
+illustrative (ข้อมูลสมมติ). Show formulas in one line when you compute. End with at most 3 short actions.
+Keep answers under 140 words."""
+
+
+def _demo_fallback(question: str, f: dict) -> dict:
+    q = question.lower()
+    if any(w in q for w in ["วิธี", "เพิ่มสภาพคล่อง", "liquid"]):
+        a = (f"เพื่อรองรับส่วนขาด ฿{f['shortfall_vs_threshold']}M ในวันที่ {f['min_cash_day']}: "
+             "1) ใช้วงเงินสินเชื่อระยะสั้น 2) เร่งรับเงินจากประกันภัยต่อ "
+             f"(฿{f['reinsurance_recoveries_30d']}M คาดว่าจะได้รับหลังวันที่ 20) 3) ชะลอรายจ่ายที่ไม่จำเป็น")
+    elif any(w in q for w in ["เลื่อน", "delay", "defer"]):
+        wk = f["weekly"][2]
+        a = (f"สัปดาห์ {wk['label']} มีเงินจ่ายเคลม ฿{wk['outflow']}M — หากเลื่อนอย่างน้อย ฿{f['shortfall_vs_threshold']}M "
+             "ไปหลังวันที่ 21 (หลังรับเงินประกันภัยต่อ) เงินสดจะไม่ต่ำกว่าเกณฑ์ ต้องตรวจสอบเงื่อนไขกรมธรรม์และกฎหมายก่อนเลื่อน")
+    elif any(w in q for w in ["ความเสี่ยง", "สาเหตุ", "ทำไม", "risk"]):
+        a = (f"ความเสี่ยงหลัก: เงินจ่ายเคลม ฿{f['claim_payments_30d']}M กระจุกในสัปดาห์ที่ 1–3 และรายจ่ายอื่น ฿{f['other_payments_30d']}M "
+             f"ขณะที่เงินรับจากประกันภัยต่อ ฿{f['reinsurance_recoveries_30d']}M เข้ามาหลังวันที่ 20")
+    else:
+        a = (f"คาดว่าเงินสดต่ำสุด ฿{f['min_cash']}M ในวันที่ {f['min_cash_day']} ต่ำกว่าเกณฑ์ ฿{f['threshold']}M "
+             f"อยู่ ฿{f['shortfall_vs_threshold']}M ควรเตรียมเงินเพิ่มอย่างน้อยเท่านี้")
+    return {"answer": a + "\n(ข้อมูลสมมติ)", "mode": "offline-fallback", "model": None, "sources": ["แผนรับจ่าย (ตัวอย่าง)"]}
+
+
+def ask_demo(question: str, facts: dict, history: list[dict] | None = None) -> dict:
     if not cfg.anthropic_api_key:
-        return _fallback(question, facts)
+        return _demo_fallback(question, facts)
+    return ask(question, facts, history, system=DEMO_PROMPT) | {"sources": ["แผนรับจ่าย (ตัวอย่าง)"]}
+
+
+def ask(question: str, facts: dict, history: list[dict] | None = None, system: str = SYSTEM_PROMPT) -> dict:
+    if not cfg.anthropic_api_key:
+        return _fallback(question, facts) if system == SYSTEM_PROMPT else _demo_fallback(question, facts)
     try:
         import anthropic
     except ImportError:
@@ -69,7 +101,7 @@ def ask(question: str, facts: dict, history: list[dict] | None = None) -> dict:
         "content": f"<facts>\n{json.dumps(facts, ensure_ascii=False)}\n</facts>\n\nQuestion: {question}",
     }]
     try:
-        resp = client.messages.create(model=cfg.claude_model, max_tokens=700, system=SYSTEM_PROMPT, messages=msgs)
+        resp = client.messages.create(model=cfg.claude_model, max_tokens=700, system=system, messages=msgs)
     except Exception as e:  # network / auth / rate limit → degrade gracefully
         return _fallback(question, facts) | {"note": f"Claude API error: {type(e).__name__}"}
     text = "".join(b.text for b in resp.content if getattr(b, "type", "") == "text")

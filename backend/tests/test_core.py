@@ -62,3 +62,12 @@ def test_api_endpoints():
     assert r["mode"] == "offline-fallback" and "0.74" in r["answer"]
     up = client.post("/api/companies/NKI/upload/payments", files={"file": ("p.csv", b"claim_id,payment_date\n")})
     assert up.status_code == 400
+
+
+def test_demo_concierge_fallback_is_labelled():
+    facts = {"min_cash": 31.6, "min_cash_day": 20, "threshold": 40, "shortfall_vs_threshold": 8.4,
+             "reinsurance_recoveries_30d": 18, "claim_payments_30d": 85, "other_payments_30d": 18,
+             "weekly": [{}, {}, {"label": "วันที่ 15–21", "outflow": 30.5}]}
+    r = client.post("/api/concierge/ask", json={"question": "เดือนนี้ต้องเตรียมเงินเพิ่มเท่าไร?", "mode": "demo", "demo_facts": facts}).json()
+    assert "ข้อมูลสมมติ" in r["answer"] and "8.4" in r["answer"]
+    assert client.post("/api/demo/scenarios", json={"shock": 10, "delay": 0, "reserve": 40, "closing": 41.5, "trough": 23.6}).json()["ok"]

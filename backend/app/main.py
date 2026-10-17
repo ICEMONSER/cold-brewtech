@@ -149,11 +149,32 @@ class AskIn(BaseModel):
     question: str
     company: str = "NKI"
     history: list[dict] = []
+    mode: str = "real"            # "real" | "demo"
+    demo_facts: dict | None = None  # sent by the frontend in demo mode (ข้อมูลสมมติ)
 
 
 @app.post("/api/concierge/ask")
 def ask(body: AskIn):
+    if body.mode == "demo":
+        if not body.demo_facts:
+            raise HTTPException(400, "demo_facts required in demo mode")
+        return concierge.ask_demo(body.question, body.demo_facts, body.history)
     p = public()
     f = run_forecast(store.company_data(body.company), 30, date.today(), store.get_settings()["min_cash_threshold"])
     facts = concierge.build_facts(p, body.company, {"forecast_30d": f if f.get("available") else {"available": False}})
     return concierge.ask(body.question, facts, body.history)
+
+
+class DemoScenarioIn(BaseModel):
+    shock: float
+    delay: int
+    reserve: float
+    closing: float
+    trough: float
+
+
+@app.post("/api/demo/scenarios")
+def save_demo_scenario(body: DemoScenarioIn):
+    """Saves a demo-mode scenario to the audit log (marked as assumption data)."""
+    store.log_event(f"[ข้อมูลสมมติ] scenario saved: {body.model_dump()}")
+    return {"ok": True}

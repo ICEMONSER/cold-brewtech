@@ -38,23 +38,36 @@ def _conn():
     return c
 
 
-def get_settings() -> dict:
-    with _conn() as c:
-        row = c.execute("SELECT v FROM kv WHERE k='settings'").fetchone()
-    return {**DEFAULT_SETTINGS, **(json.loads(row[0]) if row else {})}
+# The sample company starts with the mock-up's 40 MTHB floor; real companies have no default floor.
+COMPANY_DEFAULTS = {"DEMO": {"min_cash_threshold": 40.0}}
 
 
-def put_settings(new: dict, actor: str = "user") -> dict:
-    merged = {**get_settings(), **{k: v for k, v in new.items() if k in DEFAULT_SETTINGS}}
+def get_settings(company: str = "NKI") -> dict:
     with _conn() as c:
-        c.execute("INSERT OR REPLACE INTO kv VALUES ('settings', ?)", (json.dumps(merged),))
-        c.execute("INSERT INTO audit(item, actor) VALUES (?, ?)", (json.dumps(new, ensure_ascii=False), actor))
+        row = c.execute("SELECT v FROM kv WHERE k=?", (f"settings:{company}",)).fetchone()
+    return {**DEFAULT_SETTINGS, **COMPANY_DEFAULTS.get(company, {}), **(json.loads(row[0]) if row else {})}
+
+
+def put_settings(new: dict, company: str = "NKI", actor: str = "Finance Admin") -> dict:
+    old = get_settings(company)
+    changes = {k: v for k, v in new.items() if k in DEFAULT_SETTINGS and old.get(k) != v}
+    merged = {**old, **changes}
+    with _conn() as c:
+        c.execute("INSERT OR REPLACE INTO kv VALUES (?, ?)", (f"settings:{company}", json.dumps(merged)))
+        for k, v in changes.items():
+            c.execute("INSERT INTO audit(item, actor) VALUES (?, ?)",
+                      (json.dumps({"company": company, "key": k, "from": old.get(k), "to": v}, ensure_ascii=False), actor))
     return merged
+
+
+def log_event(item: str, actor: str = "user"):
+    with _conn() as c:
+        c.execute("INSERT INTO audit(item, actor) VALUES (?, ?)", (item, actor))
 
 
 def audit_log(limit: int = 20) -> list[dict]:
     with _conn() as c:
-        rows = c.execute("SELECT ts, item, actor FROM audit ORDER BY ts DESC LIMIT ?", (limit,)).fetchall()
+        rows = c.execute("SELECT ts, item, actor FROM audit ORDER BY rowid DESC LIMIT ?", (limit,)).fetchall()
     return [{"ts": r[0], "item": r[1], "actor": r[2]} for r in rows]
 
 

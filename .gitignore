@@ -6,3 +6,4 @@ __pycache__/
 backend/var/
 *.sqlite3
 .env
+*.tsbuildinfo

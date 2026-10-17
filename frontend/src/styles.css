@@ -367,7 +367,7 @@ svg text { font-family: "Inter", "Noto Sans Thai", sans-serif; }
 .rp-tabs .tabs button.on::after { left: -18px; right: -18px; }
 .rp-tabs .tabs button { font-size: 17.5px; }
 .rp-new { position: absolute; right: -1px; top: 7px; width: 147px; height: 42px; font-size: 16px; gap: 12px; }
-.rp { display: grid; grid-template-columns: 619px 1fr; gap: 12px; margin-top: 10px; }
+.rp { display: grid; grid-template-columns: 619px minmax(0, 1fr); gap: 12px; margin-top: 10px; }
 .rp-filters { display: flex; gap: 15px; align-items: flex-end; }
 .rp-filters .field-label { font-size: 15.5px; margin-bottom: 4px; }
 .rp-filters .sel-43 .sel-txt { font-weight: 400; }
@@ -388,11 +388,13 @@ svg text { font-family: "Inter", "Noto Sans Thai", sans-serif; }
 .rp-row .pill.fmt { justify-self: start; padding: 0 8px; }
 .mini-btn { height: 30px; border: 1px solid #e8c9cb; border-radius: 4px; background: #fff; color: var(--maroon-2); display: inline-flex; align-items: center; gap: 4px; font-family: "Noto Sans Thai"; font-size: 12px; padding: 0 6px; white-space: nowrap; }
 .mini-btn.eye { width: 31px; padding: 0 3px; overflow: hidden; }
-.rp-prev { margin-top: 0; margin-right: -10px; padding: 18px 16px 0 19px; height: 808px; position: relative; font-family: "Noto Sans Thai"; }
-.rp-title { display: flex; align-items: center; gap: 16px; height: 30px; }
-.rp-title h2 { font-size: 23px; font-weight: 700; margin: 0 2px 0 6px; letter-spacing: -.4px; }
-.rp-pdf { position: absolute; right: 155px; top: 18px; width: 131px; height: 43px; font-size: 13.5px; gap: 7px; }
-.rp-xls { position: absolute; right: 8px; top: 18px; width: 138px; height: 43px; font-size: 13.5px; gap: 7px; color: var(--maroon-2); }
+.rp-prev { margin-top: 0; margin-right: 0; padding: 18px 16px 16px 19px; min-height: 808px; position: relative; font-family: "Noto Sans Thai"; }
+.rp-title { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; min-height: 43px; }
+.rp-name-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; flex: 1; min-width: 0; padding-top: 6px; }
+.rp-title h2 { font-size: 22px; font-weight: 700; margin: 0 0 0 4px; letter-spacing: -.4px; line-height: 1.3; min-width: 0; overflow-wrap: anywhere; }
+.rp-actions { display: flex; gap: 10px; flex: none; }
+.rp-pdf { width: 131px; height: 43px; font-size: 13.5px; gap: 7px; }
+.rp-xls { width: 138px; height: 43px; font-size: 13.5px; gap: 7px; color: var(--maroon-2); }
 .rp-desc { font-size: 15px; color: var(--ink-2); margin-top: 9px; }
 .rp-meta { display: flex; gap: 28px; font-size: 14px; color: var(--ink-2); margin-top: 6px; }
 .rp-chart { margin-top: 10px; height: 305px; }

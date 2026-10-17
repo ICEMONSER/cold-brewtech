@@ -109,11 +109,15 @@ function Preview({ r, title, onSchedule }: { r: ReportItem; title: string; onSch
   return (
     <section className="card rp-prev">
       <div className="rp-title">
-        <span style={{ color: "#8b1a24", display: "inline-flex" }}>{KIND_ICON[r.kind] ?? <I.Bars4 size={28} />}</span>
-        <h2>{title}</h2>
-        <SampleChip small />
-        <button className="btn rp-pdf" onClick={() => rep.pdf(r.kind, title, r.params)}><I.FilePdf size={20} />ดาวน์โหลด PDF</button>
-        <button className="btn btn-outline rp-xls" onClick={() => rep.xlsx(r.kind, title, r.params)}><I.FileXls size={20} />ดาวน์โหลด Excel</button>
+        <div className="rp-name-row">
+          <span style={{ color: "#8b1a24", display: "inline-flex", flex: "none" }}>{KIND_ICON[r.kind] ?? <I.Bars4 size={28} />}</span>
+          <h2>{title}</h2>
+          <SampleChip small />
+        </div>
+        <div className="rp-actions">
+          <button className="btn rp-pdf" onClick={() => rep.pdf(r.kind, title, r.params)}><I.FilePdf size={20} />ดาวน์โหลด PDF</button>
+          <button className="btn btn-outline rp-xls" onClick={() => rep.xlsx(r.kind, title, r.params)}><I.FileXls size={20} />ดาวน์โหลด Excel</button>
+        </div>
       </div>
       <div className="rp-desc">{r.kind === "forecast" ? `ประมาณการกระแสเงินสดและสภาพคล่องในอีก ${H} วันข้างหน้า` : r.desc}</div>
       <div className="rp-meta"><span>ข้อมูล ณ: วันนี้ {hhmm(app.loadedAt)}</span><span>รูปแบบ: PDF, Excel</span></div>

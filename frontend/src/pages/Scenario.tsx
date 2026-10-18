@@ -117,7 +117,7 @@ export default function Scenario() {
           </div>
 
           <div className="sc-block reserve">
-            <div className="sc-lbl">เงินสำรองขั้นต่ำ <InfoTip text="เกณฑ์เงินสดขั้นต่ำที่ใช้เปรียบเทียบในสถานการณ์นี้ (ไม่เปลี่ยนค่าในตั้งค่าระบบ)" /></div>
+            <div className="sc-lbl">ระดับเงินสดที่ต้องการรักษาไว้ <InfoTip text="เกณฑ์เงินสดขั้นต่ำที่ใช้เปรียบเทียบในสถานการณ์นี้ (ไม่เปลี่ยนค่าในตั้งค่าระบบ)" /></div>
             <div className="input"><input type="number" min={0} value={reserve} onChange={(e) => setReserve(Math.max(0, +e.target.value || 0))} aria-label="เงินสำรองขั้นต่ำ (ล้านบาท)" /><span className="suffix">ล้านบาท</span></div>
             <div className="hint" style={{ marginTop: 9 }}>ช่วงแนะนำ 400 – 700 ล้านบาท</div>
           </div>
